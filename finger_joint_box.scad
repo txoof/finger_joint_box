@@ -7,6 +7,7 @@
 
 
 include <../libraries/nuts_and_bolts.scad>
+o = .005; // overage for cutting 
 
 
 // cuts that fall completely inside the edge
@@ -14,10 +15,11 @@ module insideCuts(length, finger, cutD, uDiv) {
   numFinger = floor(uDiv/2);
   numCuts = ceil(uDiv/2);
 
+  myCutD = cutD+o; // add an overage to make the cut complete
   // draw rectangles to make slots
   for (i=[0:numCuts-1]) {
     translate([i*finger*2, 0, 0])
-      square([finger, cutD]);
+      square([finger, myCutD]);
   }
 }
 
@@ -25,21 +27,24 @@ module outsideCuts(length, finger, cutD, uDiv) {
   numFinger = ceil(uDiv/2);
   numCuts = floor(uDiv/2);
 
+  myCutD = cutD+o; // add an overage in to make cuts slightly larger
+
+
   // calculate the length of the extra long cut at either end
   endCut = (length-uDiv*finger)/2;
   // amount of padding to add to the itterative placement of cuts
   // this is the extra long cut at either end
   padding = endCut+finger;
 
-  square([endCut, cutD]);
+  square([endCut, myCutD]);
 
   for (i = [0:numCuts]) {
     if (i < numCuts) {
       translate([i*(finger*2)+padding, 0, 0])
-        square([finger, cutD]);
+        square([finger, myCutD]);
     } else {
       translate([i*finger*2+padding, 0, 0])
-        square([endCut, cutD]);
+        square([endCut, myCutD]);
     }
   }
 }
@@ -64,13 +69,13 @@ module faceA(size, finger, lidFinger, material, usableDiv, usableDivLid) {
     translate([-uDivLX*lidFinger/2, boxZ/2-material, 0])
       insideCuts(length = boxX, finger = lidFinger, cutD = material, uDiv = uDivLX);
 
-    translate([-uDivX*finger/2, -boxZ/2, 0])
+    translate([-uDivX*finger/2, -boxZ/2-o, 0]) // -o to move outside
       insideCuts(length = boxX, finger = finger, cutD = material, uDiv = uDivX);
 
     // Z+/- edge (Y axis in OpenSCAD)
     translate([boxX/2-material, uDivZ*finger/2, 0]) rotate([0, 0, -90])
       insideCuts(length = boxZ, finger = finger, cutD = material, uDiv = uDivZ);
-    translate([-boxX/2, uDivZ*finger/2, 0]) rotate([0, 0, -90])
+    translate([-boxX/2-o, uDivZ*finger/2, 0]) rotate([0, 0, -90]) // -o to move outside
       insideCuts(length = boxZ, finger = finger, cutD = material, uDiv = uDivZ);
   } // end difference
 }
@@ -83,6 +88,10 @@ module faceB(size, finger, lidFinger, material, usableDiv, usableDivLid, lid = f
   uDivX = lid == true ? usableDivLid[0] : usableDiv[0];
   uDivY = lid == true ? usableDivLid[1] : usableDiv[1];
   myFinger = lid == true ? lidFinger : finger;
+
+  //uDivX = finger != lidFinger ? usableDivLid[0] : usableDiv[0];
+  //uDivY = finger != lidFinger ? usableDivLid[1] : usableDiv[1];
+  //myFinger = finger != lidFinger ? lidFinger : finger;
   
   boxX = size[0];
   boxY = size[1];
@@ -94,13 +103,13 @@ module faceB(size, finger, lidFinger, material, usableDiv, usableDivLid, lid = f
     // X+/- edge
     translate([-boxX/2, boxY/2-material, 0])
       outsideCuts(length = boxX, finger = myFinger, cutD = material, uDiv = uDivX);
-    translate([-boxX/2, -boxY/2, 0])
+    translate([-boxX/2, -boxY/2-o, 0]) // -o to move the cuts completely outside the face
       outsideCuts(length = boxX, finger = myFinger, cutD = material, uDiv = uDivX);
 
     // Y+/- edge 
     translate([boxX/2-material, uDivY*myFinger/2, 0]) rotate([0, 0, -90])
       insideCuts(length = boxY, finger = myFinger, cutD = material, uDiv = uDivY);      
-    translate([-boxX/2, uDivY*myFinger/2, 0]) rotate([0, 0, -90])
+    translate([-boxX/2-o, uDivY*myFinger/2, 0]) rotate([0, 0, -90]) // -o to move
       insideCuts(length = boxY, finger = myFinger, cutD = material, uDiv = uDivY);      
   }
   
@@ -128,13 +137,13 @@ module faceC(size, finger, lidFinger, material, usableDiv, usableDivLid) {
     translate([-boxY/2, boxZ/2-material, 0])
       outsideCuts(length = boxY, finger = lidFinger, cutD = material, uDiv = uDivLY);
     // bottom edge
-    translate([-boxY/2, -boxZ/2, 0])
+    translate([-boxY/2, -boxZ/2-o, 0]) // -o to move outside
       outsideCuts(length = boxY, finger = finger, cutD = material, uDiv = uDivY);
 
     //Z+/- edge (Y axis in OpenSCAD)
     translate([boxY/2-material, boxZ/2, 0]) rotate([0, 0, -90])
       outsideCuts(length = boxZ, finger = finger, cutD = material, uDiv = uDivZ);
-    translate([-boxY/2, boxZ/2, 0]) rotate([0, 0, -90])
+    translate([-boxY/2-o, boxZ/2, 0]) rotate([0, 0, -90]) // -o to move outside
       outsideCuts(length = boxZ, finger = finger, cutD = material, uDiv = uDivZ);
   }
 
@@ -173,7 +182,7 @@ module layout2D(size, finger, lidFinger, material, usableDiv, usableDivLid) {
   translate([0, -boxZ/2-yDisplace/2-separation, 0])
     color("lime")
       faceB(size = size, finger = finger, material = material, lidFinger = lidFinger, 
-            usableDiv = usableDiv, usableDivLid = usableDivLid, lid = false);
+            usableDiv = usableDiv, usableDivLid = usableDivLid, lid = true);
 
   translate([boxX+separation+boxY+separation, -boxZ/2-yDisplace/2-separation, 0])
     color("green")
@@ -189,17 +198,19 @@ module layout3D(size, finger, lidFinger, material, usableDiv, usableDivLid, alph
   // amount to shift to account for thickness of material
   D = material/2;
 
+  // this is the base
   color("green", alpha = alpha)
     translate([])
     linear_extrude(height = material, center = true)
     faceB(size = size, finger = finger, material = material, lidFinger = lidFinger, 
           usableDiv = usableDiv, usableDivLid = usableDivLid, lid = false);
 
+  // this is the "lid"
   color("lime", alpha = alpha)
     translate([0, 0, boxZ-material])
     linear_extrude(height = material, center = true)
     faceB(size = size, finger = finger, material = material, lidFinger = lidFinger, 
-          usableDiv = usableDiv, usableDivLid = usableDivLid, lid = false);
+          usableDiv = usableDiv, usableDivLid = usableDivLid, lid = true);
 
 
   color("red", alpha = alpha)
@@ -270,4 +281,4 @@ module fingerBox(size = [50, 80, 60], finger = 5,
   
 }
 
-fingerBox(size = [100, 70, 60], finger = 20, lidFinger = 20, 2D = true);
+fingerBox(size = [100, 70, 60], finger = 10, lidFinger = 21, 2D = true);
