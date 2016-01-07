@@ -6,8 +6,27 @@
 */
 
 
-include <../libraries/nuts_and_bolts.scad>
-o = .005; // overage for cutting 
+//include <../libraries/nuts_and_bolts.scad>
+/* [Box Dimensions] */
+// Box X dimension
+customX = 100;
+// Box Y dimension
+customY = 60;
+// Box Z dimension
+customZ = 40;
+
+// Finger & Cut width (sides, bottom) - must be < 1/3 shortest side
+customFinger = 10;
+// Finger & Cut wdith on lid only - must be < 1/3 shortest X or Y 
+customLidFinger = 20;
+
+/* [Layout Option] */
+// layout 2D or 3D style - THINGIVERSE CANNOT OUTPUT 2D STLS!
+customLayout2D = false; // [false:false, true:true]
+
+/* [Hidden] */
+customSize = [customX, customY, customZ];
+o = .001; // overage for cutting 
 
 
 // cuts that fall completely inside the edge
@@ -281,4 +300,7 @@ module fingerBox(size = [50, 80, 60], finger = 5,
   
 }
 
-fingerBox(size = [100, 70, 60], finger = 10, lidFinger = 21, 2D = true);
+//fingerBox(size = [100, 70, 60], finger = 10, lidFinger = 21, 2D = true);
+
+fingerBox(size = customSize, finger = customFinger, lidFinger = customLidFinger, 
+          2D = customLayout2D);
