@@ -270,4 +270,4 @@ module fingerBox(size = [50, 80, 60], finger = 5,
   
 }
 
-fingerBox(size = [100, 70, 60], finger = 15, lidFinger = 20, 2D = true);
+fingerBox(size = [100, 70, 60], finger = 20, lidFinger = 20, 2D = true);
