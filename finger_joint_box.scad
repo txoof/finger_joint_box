@@ -22,7 +22,7 @@ customLidFinger = 20;
 
 /* [Layout Option] */
 // layout 2D or 3D style - THINGIVERSE CANNOT OUTPUT 2D STLS!
-customLayout2D = false; // [false:false, true:true]
+customLayout2D = 0; // [0:3D layout for visualization, 1:2D layout for DXF output]
 
 /* [Hidden] */
 customSize = [customX, customY, customZ];
