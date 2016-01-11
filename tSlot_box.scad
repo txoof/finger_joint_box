@@ -11,12 +11,15 @@
       simpler 
 
   Issues:
-    * The thrown together model does not render the tslots correctly.
+    X The thrown together model does not render the tslots correctly.
     X bolt hole is ON the edge of each tab; this will not cut properly
       - move hole in a bit
       - add a bit to each tab
 
 
+  Thanks to 
+  * Floppykiller for finding a bug in the tab extension 
+    - http://www.thingiverse.com/Floppykiller/about
 */
 
 
