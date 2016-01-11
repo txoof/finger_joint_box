@@ -154,7 +154,7 @@ module faceB(size, finger, lidFinger, material, usableDiv, usableDivLid,
   boxY = size[1];
   boxZ = size[2];
  
-  extend = 1.5; // amount to extend tabs that have bolt holes
+  extend = material/2; // amount to extend tabs that have bolt holes
 
   difference() {
     union() {
@@ -208,7 +208,7 @@ module faceC(size, finger, lidFinger, material, usableDiv, usableDivLid) {
   boxY = size[1];
   boxZ = size[2];
 
-  extend = 1.5; // amount to extend tabs that have bolt holes
+  extend = material/2; // amount to extend tabs that have bolt holes
   
 
   difference() {
@@ -536,5 +536,5 @@ fing = 16;
 
 // icky global for bolt length 
 
-fingerBox(size = [100, 60, 55], material =  3, finger = fing, 
+fingerBox(size = [100, 85, 70], material =  4, finger = fing, 
   lidFinger = fing, 2D = d, bolt = boltLen);
