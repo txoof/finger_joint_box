@@ -24,7 +24,7 @@
 
 
 include <../libraries/nuts_and_bolts.scad>
-
+use <../nuts_and_bolts_biomushroom/nuts_and_bolts.scad>
 o = 0.001; // overage
 
 module addBolts(length, finger, cutD, uDiv, bolt = 10) {
@@ -32,7 +32,10 @@ module addBolts(length, finger, cutD, uDiv, bolt = 10) {
 
   for (i = [0:numCuts-1]) {
     translate([i*finger*2, 0, 0])
-      tSlotFit(bolt = bolt);
+      //tSlotFit(bolt = bolt);
+      tSlotBolt(length = bolt);
+      
+
   }
 }
 
@@ -534,7 +537,7 @@ boltLen = 10;
 
 d = true;
 
-//d = false;
+d = false;
 fing = 16;
 
 // icky global for bolt length 
