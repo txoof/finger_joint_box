@@ -11,19 +11,19 @@
 // box width
 customX = 100;
 // box depth
-customY = 80;
+customY = 100;
 // box height
-customZ = 65;
+customZ = 100;
 // finger widths (must be < 1/3 length of shortest box dimension)
-customFinger = 20;
+customFinger = 15;
 // box material thickness
-customMaterial = 2.5;
+customMaterial = 4;
 // bolt length
-customBolt = 10; //[6, 10, 12, 15, 20]
+customBolt = 11; //[6, 10, 12, 15, 20]
 
 /* [Display] */
-customDisplay = 0; // [1: 2D for DXF, 0: 3D for Display]
-customTransparency = 50; //[0:90]
+customDisplay = 1; // [1: 2D for DXF, 0: 3D for Display]
+customTransparency = 0; //[0:90]
 
 
 /* [Hidden] */
