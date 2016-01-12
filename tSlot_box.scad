@@ -17,9 +17,11 @@
       - add a bit to each tab
 
 
-  Thanks to 
-  * Floppykiller for finding a bug in the tab extension 
-    - http://www.thingiverse.com/Floppykiller/about
+  Thanks to: 
+  * Floppykiller for finding a bugs - http://www.thingiverse.com/Floppykiller/about
+    - problem in tab extension 
+    - problem in tSlot movement with material thickness
+    - problem in bolt-hole placement
 */
 
 
@@ -34,7 +36,6 @@ module addBolts(length, finger, cutD, uDiv, bolt = 10) {
   for (i = [0:numCuts-1]) {
     translate([i*finger*2, 0, 0])
       //tSlotFit(bolt = bolt); // from old library version
-      //tSlotBolt(length = bolt);
       tSlotBolt(size = m[3], length = bolt);
   }
 } // end addBolts
@@ -55,7 +56,7 @@ module insideCuts(length, finger, cutD, uDiv, bolt) {
     union() {
       square([finger, cutD+o]);
       translate([finger/2, -(bolt/2-cutD), 0])
-        //tSlot2D(size = m3, bolt = bolt, material = 0);
+        //tSlot2D(size = m3, bolt = bolt, material = 0); // from old library version
         tSlot(size = m[3], length = bolt, material = cutD, 2d = true);
     }
   }
@@ -91,8 +92,9 @@ module outsideCuts(length, finger, cutD, uDiv) {
 
     // bolt holes
     for (j = [0:numFinger]) {
-      translate([i*finger*2+finger/2+padding-finger, 3/2, 0])
-        mBolt2D(m3, tollerance = 0.15);
+      translate([i*finger*2+finger/2+padding-finger, cutD/2, 0])
+        //mBolt2D(m3, tollerance = 0.15);
+        boltHole(size = m[3], tolerance = 0.2, 2d = true);
     }
 
   }
@@ -340,7 +342,7 @@ module layout2D(size, finger, lidFinger, material, usableDiv, usableDivLid, bolt
   boxZ = size[2];
   
   //separation of pieces
-  separation = material*2;
+  separation = material*2+1;
   // calculate the most efficient layout
   yDisplace = boxY > boxZ ? boxY : boxZ + separation;
 
@@ -543,5 +545,5 @@ fing = 16;
 
 // icky global for bolt length 
 
-fingerBox(size = [100, 85, 70], material =  7, finger = fing, 
-  lidFinger = fing, 2D = d, bolt = boltLen);
+fingerBox(size = [100, 85, 70], material =  4, finger = fing, 
+  lidFinger = fing, 2D = d, bolt = boltLen, alpha = 1);
