@@ -6,7 +6,6 @@
  
 
   To Do:
-    X get rid of dirty "myBolt" global variable
     * write each face as separate module (front, back, left, etc.) to make modifications
       simpler 
 
@@ -25,7 +24,7 @@
 */
 
 
-include <../libraries/nuts_and_bolts.scad>
+//include <../libraries/nuts_and_bolts.scad>
 include <../nuts_and_bolts_biomushroom/nuts_and_bolts.scad>
 
 o = 0.001; // overage
@@ -536,14 +535,12 @@ module fingerBox(size = [80, 50, 60], finger = 5,
   
 }
 
-boltLen = 15;
+boltLen = 10;
 
 d = true;
 
 d = false;
-fing = 16;
+finger = 16;
 
-// icky global for bolt length 
-
-fingerBox(size = [100, 85, 70], material =  4, finger = fing, 
-  lidFinger = fing, 2D = d, bolt = boltLen, alpha = 1);
+fingerBox(size = [100, 85, 70], material =  3, finger = finger, 
+  lidFinger = finger, 2D = d, bolt = boltLen, alpha = 0.60);
