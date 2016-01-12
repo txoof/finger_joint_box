@@ -24,7 +24,8 @@
 
 
 include <../libraries/nuts_and_bolts.scad>
-use <../nuts_and_bolts_biomushroom/nuts_and_bolts.scad>
+include <../nuts_and_bolts_biomushroom/nuts_and_bolts.scad>
+
 o = 0.001; // overage
 
 module addBolts(length, finger, cutD, uDiv, bolt = 10) {
@@ -32,12 +33,11 @@ module addBolts(length, finger, cutD, uDiv, bolt = 10) {
 
   for (i = [0:numCuts-1]) {
     translate([i*finger*2, 0, 0])
-      //tSlotFit(bolt = bolt);
-      tSlotBolt(length = bolt);
-      
-
+      //tSlotFit(bolt = bolt); // from old library version
+      //tSlotBolt(length = bolt);
+      tSlotBolt(size = m[3], length = bolt);
   }
-}
+} // end addBolts
 
 
 // cuts that fall completely inside the edge
@@ -55,7 +55,8 @@ module insideCuts(length, finger, cutD, uDiv, bolt) {
     union() {
       square([finger, cutD+o]);
       translate([finger/2, -(bolt/2-cutD), 0])
-        tSlot2D(size = m3, bolt = bolt, material = 0);
+        //tSlot2D(size = m3, bolt = bolt, material = 0);
+        tSlot(size = m[3], length = bolt, material = cutD, 2d = true);
     }
   }
 }
@@ -533,7 +534,7 @@ module fingerBox(size = [80, 50, 60], finger = 5,
   
 }
 
-boltLen = 10;
+boltLen = 15;
 
 d = true;
 
@@ -542,5 +543,5 @@ fing = 16;
 
 // icky global for bolt length 
 
-fingerBox(size = [100, 85, 70], material =  4, finger = fing, 
+fingerBox(size = [100, 85, 70], material =  7, finger = fing, 
   lidFinger = fing, 2D = d, bolt = boltLen);
