@@ -25,7 +25,7 @@
 
 
 //include <../libraries/nuts_and_bolts.scad>
-include <../nuts_and_bolts_biomushroom/nuts_and_bolts.scad>
+include <./nuts_and_bolts.scad>
 
 o = 0.001; // overage
 
@@ -539,8 +539,7 @@ boltLen = 10;
 
 d = true;
 
-d = false;
+//d = false;
 finger = 16;
 
-fingerBox(size = [100, 85, 70], material =  3, finger = finger, 
-  lidFinger = finger, 2D = d, bolt = boltLen, alpha = 0.60);
+fingerBox(size = [50, 50, 50], material =  3, finger = finger, lidFinger = finger, 2D = d, bolt = boltLen, alpha = 0.60);
