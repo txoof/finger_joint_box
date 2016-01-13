@@ -22,7 +22,7 @@ customMaterial = 2.5;
 customBolt = 10; //[6, 10, 12, 15, 20]
 
 /* [Display] */
-customDisplay = 1; // [1: 2D for DXF, 0: 3D for Display]
+customDisplay = 0; // [1: 2D for DXF, 0: 3D for Display]
 customTransparency = 40; //[0:90]
 
 
@@ -41,25 +41,61 @@ if ( cF > customX/3 || cF > customY/3 || cF > customZ/3) {
     text("Error! customFinger must be less than 1/3 of shortest side", halign = "center");
 }
 
+// customizer settings
+
+/* [Bolt] */
+customSize = 3; //[2, 3, 4, 6, 8, 10]
+customLength = 10; //[5:25]
+customHead = "socket"; //[button, hex, flatSocket, flatHead, conical, socket, set, grub]
+customThread = "metric"; //[none, metric]
+customTolerance = 0.0; //[-0.9:0.05:0.9]
+
+//bolt(size = metric_fastener[customSize], length = customLength, head = customHead, threadType = customThread, tolerance = customTolerance, list = true);
+
+// try these:
+
+//demo();
+//tSlotDemo();
+
+//list_types(metric_fastener);
+
+//bolt(size=metric_fastener[3], head = "", length = 12, threadType = "metric", center = 0,  v = 0, list = true);
+//boltHole(v = true, center = true, 2d = true, tolerance = .4);
+
+//nut(size = metric_fastener[3], v = true, center = true);
+//nutHole(size = metric_fastener[3], center = true, v = true);
+//nutHole(size = metric_fastener[3], center = true, v = true, 2d = true, tolerance = 0.4);
+
+//washer(size = metric_fastener[2], v=true);
+//washerHole(size = metric_fastener[2]);
+//washerHole(size = metric_fastener[2], 2d = true, tolerance = 0.4);
+
+
 /* [Hidden] */
 /*
+  =====start documentation=====
   Create nuts, bolts, washers, tslots 
 
   Aaron Ciuffo - http://www.thingiverse.com/txoof/about, 
   Reach me also at gmail: aaron.ciuffo
 
-  Revision of http://www.thingiverse.com/thing:1220331/edit
+  ***These fasteners are close aproximations to the ISO standards, but in many cases are fudged.  Most notably the thread algorithm is not at all ISO compliant.***
+
+  Latest version available on [GitHub](https://github.com/txoof/OpenSCAD_fasteners)
+
+  Revision of http://www.thingiverse.com/thing:1220331
 
   Based heavily on http://www.thingiverse.com/thing:965737 by biomushroom
 
   Thread algorithm based on http://www.thingiverse.com/thing:27183 by Trevor Moseley
 
+  
 
   ISSUES:
-    * heads are *slightly* larger than defined due to minkowski opperations on them
     * only metric threads have been implemented
     * grub/set screws do not have socket heads
     * nodes do not work properly for sizes above M4
+    * button head size is a bit of a fudge. 
 
   TODO:
     * add socket to grub screws
@@ -68,7 +104,7 @@ if ( cF > customX/3 || cF > customY/3 || cF > customZ/3) {
 #### How To Use:
 
   * Download this script 
-  * comment out the bolt() call above
+  * comment out the bolt() call
   * add the following line to your script:
   ```
   include </path/to/script/nuts_and_bolts.scad>
@@ -81,17 +117,23 @@ if ( cF > customX/3 || cF > customY/3 || cF > customZ/3) {
     - sizes: 2, 3, 4, 6, 8, 10
 
    
+#### demo(text = true/false);
+  **show most of the the features**
+  * text = true/false - add descriptive text
 
-#### bolt(size = fastener_type[index], head = "<type\>", length = N\*,
-            threadType = "type", quality = N, tolerance = R,
-            list = true/false, center = true/false, v = true/false);
+### tSlotDemo();
+  **demonstrate a t-slot joint with a bolt**
+  * for a working example of t-slot consturction see this [box](http://www.thingiverse.com/thing:1251283) built with t-slots
+
+
+#### bolt(size = fastener_type[index], head = "<type\>", length = N\*, threadType = "type", quality = N, tolerance = R, list = true/false, center = true/false, v = true/false);
 
   **draw a predefined bolt from fastener_type array**
   * size = metric_fastener[index] - see the fastener_type array below
     - default: M3
-  * head = "hex", "flatSocket"/"flatHead", "conical", "socket", "grub"/"set"
+  * head = "button", "hex", "flatSocket"/"flatHead", "conical", "socket", "grub"/"set"
     - default: socket
-  * length = thread length - \*in the case of a flat head socket, the TOTAL length
+  * length = thread length - \*in the case of a flat-head socket, the TOTAL length
     - default: 10
   * threadType = "metric", "none"
     - default: metric
@@ -113,8 +155,7 @@ if ( cF > customX/3 || cF > customY/3 || cF > customZ/3) {
   ```
 
 
-####  nut(size = fastener_type[index], threadType = thread type, quality = N, 
-          list = false, quality = N, center = false, v = false);
+####  nut(size = fastener_type[index], threadType = thread type, quality = N, list = false, quality = N, center = false, v = false);
   **draw a predefined nut from fastener_type array**
   * size = metric_fastener[index] - see the fastener_type array below
   - default: M3
@@ -135,8 +176,7 @@ if ( cF > customX/3 || cF > customY/3 || cF > customZ/3) {
   ```
 
 
-#### washer(size =fastener_type[index] , quality = N, , tolerance = R, quality = N, 
-             center = false, v = false)
+#### washer(size =fastener_type[index] , quality = N, , tolerance = R, quality = N, center = false, v = false)
   **draw a predefined washer from fastener_type array**
   * size = metric_fastener[index] - see the fastener_type array below
     - default: M3
@@ -159,8 +199,7 @@ if ( cF > customX/3 || cF > customY/3 || cF > customZ/3) {
   ```
 
 
-#### boltHole(size = fastener_type[index], length = N, quality = N, tolerance = R,
-               quality =N, 2d = true/false, center = true/false, v = true/false)
+#### boltHole(size = fastener_type[index], length = N, quality = N, tolerance = R, quality =N, 2d = true/false, center = true/false, v = true/false)
   **draw a predefined bolt hole from fastener_type array**
   * size = metric_fastener[index] + tolerance - see the fastener_type array below
     - default: M3
@@ -258,9 +297,9 @@ if ( cF > customX/3 || cF > customY/3 || cF > customZ/3) {
     - default: M3
   * length = N - length of bolt
     - default: 10
-  * head = "head type" - socket, hex, conical, set, flatHead (try v = true to see all types)
+  * head = "head type" - socket, hex, conical, set, flatHead (try list = true to see all types)
     - default: socket
-  * threadType = "thread type" - metric, none (try v = true to see all types)
+  * threadType = "thread type" - metric, none (try list = true to see all types)
     - default: none
   * quality = N - N = number of curve segments (integer); if quality is set < 24 simpler forms of bolts will be used
     - default: 24
@@ -313,6 +352,7 @@ if ( cF > customX/3 || cF > customY/3 || cF > customZ/3) {
   * washer thickness - thickness of washer
   * washer diameter - diameter of washer
 
+  =====end documentation=====
 */
 
 /* [HIDDEN] */ 
@@ -320,21 +360,22 @@ if ( cF > customX/3 || cF > customY/3 || cF > customZ/3) {
 metric_fastener = [
   ["name", "thread diameter", "hex head thickess", "hex head & nut size", 
   "socket head diameter", "socket head thickness", "socket tool size", 
-  "nut thickness,", "pitch", "washer thickness", "washer diameter"] , 
+  "nut thickness,", "pitch", "washer thickness", "washer diameter",
+  "button thickness"] , 
   // M0 - field descriptors place holder in array
 
   ["M1 - UNDEFINED"], // M1
 
-  ["M2 Bolt, Nut & Washer", 2, 2, 4, 3.5, 2, 1.5, 1.6, 0.4, 0.3, 5.5], // M2
-  ["M3 Bolt, Nut & Washer", 3, 2, 5.5, 5.5, 3, 2.5, 2.4, 0.5, 0.5, 7], // M3
-  ["M4 Bolt, Nut & Washer", 4, 2.8, 7, 7, 4, 3, 3.2, 0.7, 0.8, 9], // M4
+  ["M2 Bolt, Nut & Washer", 2, 2, 4, 3.5, 2, 1.5, 1.6, 0.4, 0.3, 5.5, .90], // M2
+  ["M3 Bolt, Nut & Washer", 3, 2, 5.5, 5.5, 3, 2.5, 2.4, 0.5, 0.5, 7, 1.04], // M3
+  ["M4 Bolt, Nut & Washer", 4, 2.8, 7, 7, 4, 3, 3.2, 0.7, 0.8, 9, 1.3], // M4
   //["M5 BOGUS", 5, 3, 8, 9, 5, 4, 4, .8, .9, 10],
   ["M5 - UNDEFINED"],
-  ["M6 Bolt, Nut & Washer", 6, 4, 10, 10, 6, 5, 5, 1, 1.6, 12],
+  ["M6 Bolt, Nut & Washer", 6, 4, 10, 10, 6, 5, 5, 1, 1.6, 12, 2.08],
   ["M7 - UNDEFINED"],
-  ["M8 Bolt, Nut & Washer", 8, 5.5, 13, 13, 8, 6, 6.5, 1.25, 2, 17],
+  ["M8 Bolt, Nut & Washer", 8, 5.5, 13, 13, 8, 6, 6.5, 1.25, 2, 17, 2.6],
   ["M9 - UNDEFINED"],
-  ["M10 Bolt, Nut & Washer", 10, 7, 17, 16, 10, 8, 8, 1.5, 2, 21]
+  ["M10 Bolt, Nut & Washer", 10, 7, 17, 16, 10, 8, 8, 1.5, 2, 21, 3.12]
 
 ];
 
@@ -401,7 +442,6 @@ module thread(size = defaultSize, length = 10, threadType = "metric",
   }
 }
 
-
 // draw a head of the specified type
 module bolt_head(size = defaultSize, head = "socket", quality = 24, tolerance = 0, 
                 list = false, v = false) {
@@ -412,7 +452,7 @@ module bolt_head(size = defaultSize, head = "socket", quality = 24, tolerance = 
   o = 0.001; // overage to make cuts complete
 
   // list available heads here
-  headTypes = ["conical", "flatSocket", "flatHead", "grub", "hex", "set", "socket"]; 
+  headTypes = ["button", "conical", "flatSocket", "flatHead", "grub", "hex", "set", "socket" ]; 
   
 
   if (list) {
@@ -426,29 +466,58 @@ module bolt_head(size = defaultSize, head = "socket", quality = 24, tolerance = 
   head = checkType(head, headTypes) == [[]] ? defaultHead : head;
 
   if (head == "socket") { // hex socket head
-    // unsure about these calculations - minkowski adds some height to the head
-    headThick = size[5]-(3/16 * size[5])+tolerance;
+    // minkwoski() adds 2*sphere radius to the head adjust variables to deal with this
+    headThick = size[5]-(1/8 * size[4])+tolerance;
     headRad = (size[4] + tolerance)/2;
-    
-    // move the head to the origin - this is *slightly* below the axis
-    translate([0, 0, (1/8 * headThick)]) 
+    minSphere = headRad * 1/8; // radius for minkowski sphere
+   
+    transZ = quality >= 24 ? 1 : 0; // set to 0 if quality is less than 24
+
+    // move the head to the origin, move just under origin to ensure union 
+    translate([0, 0, ((1/8 * size[4])/2*transZ)-o*5]) 
     difference() {
       if (quality >= 24) { // if low quality, disable minkowski
         minkowski() { // create a nicely rounded head
-          sphere(r = 1/8 * headRad);
-          //cylinder ( h = size[5]-(1/8 * size[5]), r = size[4]/2 - (1/8 * size[4]/2));
-          cylinder ( h = headThick, r = headRad - (1/8 * headRad));
+          sphere(r = minSphere);
+          cylinder ( h = headThick, r = headRad - minSphere);
         } // end minkowski
-      } else {
-        cylinder(h = headThick, r = headRad);
+      } else { // for low rez head - add back in difference from minkowski
+        cylinder(h = headThick + minSphere*2, r = headRad);
       }
-
-
       // hex tool socket
-      translate([0, 0, headThick*.75/2])
+      translate([0, 0, headThick/2])
         cylinder( r = hexRadius(size[6]), $fn = 6, h = headThick*.8);
     } // end difference
   } // end if socket
+
+
+  if (head == "conical") {
+    // minkwoski() adds 2*sphere radius to the head adjust variables to deal with this
+    headThick = size[5]*1.5 -(1/32*size[4])/2+tolerance;
+    headR2 = (size[4]*.8 -1/32*size[4])/2+tolerance/2;
+    headR1 = (size[4]+tolerance)/2;
+    minSphere = 1/32 * headR1/2;
+   
+    transZ = quality >= 24 ? 1 : 0; // set to 0 if quality is less than 24
+    
+    // move the head to the origin - this is *slightly* below the axis
+    translate([0, 0, minSphere*transZ-o*5])
+    difference() {
+      if (quality >= 24) {
+        minkowski() { // add rounded edges to head
+          //sphere((1/32)*size[4]/2);
+          sphere(r = minSphere);
+          cylinder(h = headThick, r2 = headR2, 
+                  r1 = headR1);
+        } // end minkowski
+      } else {
+       cylinder(h = headThick, r2 = headR2, r1 = headR1); 
+      }
+      translate([0, 0, headThick*.25])
+        cylinder(r = hexRadius(size[6]), h = headThick*.8, $fn = 6);
+    }
+  } // end if conical
+
 
   if (head == "hex") {
     headThick = size[2]+tolerance;
@@ -474,30 +543,30 @@ module bolt_head(size = defaultSize, head = "socket", quality = 24, tolerance = 
     }
   } // end if flatSocket
 
-  if (head == "conical") {
-    // unsure about these calculations
-    headThick = size[5]*1.5 - 1/32*size[4]+tolerance;
-    headR2 = (size[4]*.8 -1/32*size[4])/2+tolerance/2;
-    headR1 = (size[4]+tolerance)/2;
-    
-    // move the head to the origin - this is *slightly* below the axis
-    translate([0, 0, (1/64 * headThick)])
-    difference() {
-      if (quality >= 24) {
-        minkowski() { // add rounded edges to head
-          sphere((1/32)*size[4]/2);
-          cylinder(h = headThick, r2 = headR2, 
-                  r1 = headR1);
-        } // end minkowski
-      } else {
-       cylinder(h = headThick, r2 = headR2, r1 = headR1); 
-      }
-      translate([0, 0, headThick*.25])
-        cylinder(r = hexRadius(size[6]), h = headThick*.8, $fn = 6);
-    }
-  } // end if conical
 
   // don't do anything for type grub
+
+  if (head == "button") {
+    c = size[4]; // chord length 
+    f = size[11]*1.25; // height of button  * 1.25 rough aproximation of proper size 
+
+    //headRadius = ((pow(c,2)/4)-pow(f,2))/2*f;
+    // r = radius of sphere that will be difference'd to make the button
+    r = ( pow(c,2)/4 + pow(f,2) )/(2*f); 
+
+    d = r - f; // displacement to move sphere
+
+    difference() {
+      translate([0, 0, -d])
+      sphere(r = r, $fn = quality);  
+      translate([0, 0, -r])
+        cube(r*2, center = true);
+      translate([0, 0, f/3])
+      cylinder(r = hexRadius(size[6]), h = f, $fn = 6);
+      
+    } // end difference
+  } // end if button
+
 }
 
 module bolt(size = defaultSize, head = "socket", length = 10, threadType = "metric", 
@@ -547,7 +616,6 @@ module bolt(size = defaultSize, head = "socket", length = 10, threadType = "metr
 
 /* 
   3D nut model
-  size = 
 */
 module nut(size = defaultSize, threadType = "metric", quality = 24, tolerance = 0,
           list = false, center = false, v = false) {
@@ -776,16 +844,19 @@ module tSlotDemo() {
   faceX = 50;
   faceY = 30;
 
+  // create a face with a slot for a tab to fit into 
   color("gold")
   difference() {
-    cube([faceX, faceY, material], center = true); // face
+    cube([faceX, faceY, material], center = true); // face to be used
     translate([0, (faceY/2-material/2)]) 
-      cube([cut, material+.001, material*2], center = true); // cut out
-    translate([0, faceY/2-(bolt)/2, 0])
-      tSlot(tolerance = 0.25, length = bolt);  
+      cube([cut, material+.001, material*2], center = true); // cut out for tab
+    translate([0, faceY/2- bolt/2, 0])
+      tSlot(tolerance = 0.25, length = bolt, material = material); // cut a tslot
   }
 
-  color("darkblue") // face with tab
+  // create a face with a tab to fit into the gold slot above
+  color("darkblue") 
+  // move into position to mate with gold face
   translate([0, faceY/2-material/2-.1, -faceY/2+material/2-.1])
   rotate([90, 0, 0])
   
@@ -793,51 +864,75 @@ module tSlotDemo() {
     union() {
       cube([faceX, faceY, material], center = true); // face
       translate([0, faceY/2, 0])
-        cube([cut, material, material], center = true); // tab
+        cube([cut, material, material], center = true); // add a tab
     }
+    // remove material on either side of tab
     for (i = [-1, 1]) { // cut outs on either side of tab
       translate([i*(faceX/2-outCut/2), faceY/2-material/2-.001, 0])
         cube([outCut+.02, material+.25, material*2], center = true);
     }
+    // cut a hole in the blue face for the bolt to fit through
     translate([0, faceY/2-1.5, bolt/2])
       rotate([180, 0, 0])
-      boltHole(length = bolt); // bolt hole
+      boltHole(length = bolt, tolerance = 0.4); // bolt hole
   }
 
-  // add a bolt with nut attached
-  color("darkgray") 
-  translate([0, faceY/2-bolt, 0])
-  rotate([-90, 0, 0])
-  tSlotBolt(size = defaultSize, length = bolt); // bolt with nut attached 
+
+  // add a bolt with nut attached to show off tSlot
+  translate([0, faceY/2- bolt/2, 0])
+    rotate([-90, 0, 0])
+    tSlotBolt(size = defaultSize, length = bolt, material = material);  
 }
 
-module demo() {
-  space = metric_fastener[3][4]*1.5; // spacing
+module demo(text = true) {
+  space = metric_fastener[3][4]*2; // spacing
   
   // types of threads and fasteners
-  types =  ["conical", "socket", "hex", "flatHead", "grub", "nut", "washer"];
+  // "nut", "washer" and "text plac holder" need to be last three elements
+  types =  ["conical", "socket", "hex", "flatHead", "button", "grub", "nut", 
+            "washer", "text place holder"];
 
-  colors = ["red", "orange", "gold", "green", "skyblue", "lavender", "violet"];
-  
-  threads = ["metric", "none", "none"];
+  //colors = ["red", "orange", "gold", "green", "skyblue", "lavender", "violet"];
 
-  quality = [36, 24, 7];
+  renderOpts = [["metric", 36], ["metric", 24], ["none", 23], ["none", 9]];
 
 
   // this is a little brittle - the nut and washer section will break if more 
   // head types are added 
+  h = -33; // corse multiplier (rate of color change)
+  ip = 7; // starting column in color space grid
+  jp = 15; // starting row
+  m = 1; // fine multiplier (rate of color change)
   for (i = [0:len(types)-1]) { // recurse the types of heads, and fasteners
-    for (j = [0:len(threads)-1]) { // recurse the types of threads 
+
+    if (text && i < len(types)-1) { // add labels
+      translate([space*i, -len(types[i])-5, 0])
+        rotate(90)
+        text(str(types[i]), size = 3, halign = "center", valign = "center");
+    }
+
+    for (j = [0:len(renderOpts)-1]) { // recurse the types of threads 
+
+
+      r = 0.5+sin(h*(i+ip)*m)/2; // calculate red color
+      g = 0.5+sin(h*(j+jp)*m)/2;
+      b = 0.5+sin(h*(i+j+jp+ip)*m)/2;
+
       translate([space*i, j*space ,0]) 
-          color(colors[i])
-          if (i < 5) {
-            bolt(head = types[i], threadType = threads[j], quality = quality[j]);
+          color([r, g, b])
+          if (i < len(types)-3) {
+            bolt(head = types[i], threadType = renderOpts[j][0], 
+                quality = renderOpts[j][1]);
           } 
-          else if (i == 5) {
-            nut(threadType = threads[j], quality = quality[j]);
+          else if (i == len(types) - 3) {
+            nut(threadType = renderOpts[j][0], quality = renderOpts[j][1]);
           }
-          else if (i == 6) {
-            washer(quality = quality[j]);
+          else if (i == len(types) - 2) {
+            washer(quality = renderOpts[j][1]);
+          }
+          else if ( text && i == len(types) - 1) { // add labels
+            color("blue")
+            text(str("thread: ",renderOpts[j][0], "; quality: ", renderOpts[j][1] ), size = 3, valign = "center");
           }
     } // end for j
   } // end for i
@@ -872,7 +967,7 @@ module demo() {
 
 
 //include <../libraries/nuts_and_bolts.scad>
-include <../nuts_and_bolts_biomushroom/nuts_and_bolts.scad>
+include <./nuts_and_bolts.scad>
 
 o = 0.001; // overage
 
@@ -1382,8 +1477,6 @@ module fingerBox(size = [80, 50, 60], finger = 5,
   
 }
 
-/*
-
 boltLen = 10;
 
 d = true;
@@ -1391,7 +1484,5 @@ d = true;
 d = false;
 finger = 16;
 
-fingerBox(size = [100, 85, 70], material =  3, finger = finger, 
-  lidFinger = finger, 2D = d, bolt = boltLen, alpha = 0.60);
-
-*/
+//fingerBox(size = [60, 40, 30], material =  3, finger = finger, 
+//  lidFinger = finger, 2D = d, bolt = boltLen, alpha = 0.60);
