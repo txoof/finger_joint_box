@@ -17,9 +17,9 @@ customZ = 75;
 // finger widths (must be < 1/3 length of shortest box dimension)
 customFinger = 15;
 // box material thickness
-customMaterial = 8;
+customMaterial = 2.5;
 // bolt length
-customBolt = 20; //[6, 10, 12, 15, 20, 25]
+customBolt = 15; //[6, 10, 12, 15, 20, 25]
 
 /* [Display] */
 customDisplay = "3D"; // ["2D": 2D for DXF, "3D": 3D for Display, "flat": 3D printable version]
