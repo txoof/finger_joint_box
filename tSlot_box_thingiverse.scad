@@ -17,12 +17,12 @@ customZ = 75;
 // finger widths (must be < 1/3 length of shortest box dimension)
 customFinger = 15;
 // box material thickness
-customMaterial = 2.5;
+customMaterial = 8;
 // bolt length
-customBolt = 10; //[6, 10, 12, 15, 20]
+customBolt = 20; //[6, 10, 12, 15, 20, 25]
 
 /* [Display] */
-customDisplay = 0; // [1: 2D for DXF, 0: 3D for Display]
+customDisplay = "flat"; // ["2D": 2D for DXF, "3D": 3D for Display, "flat": 3D printable version]
 customTransparency = 40; //[0:90]
 
 
@@ -31,8 +31,8 @@ customS = [customX, customY, customZ]; // custom size array
 o = 0.001; // overage for making complete cuts at edges
 cAlpha = (100-customTransparency)/100; // convert integer to real for alpha
 
-fingerBox(size = customS, material =  customMaterial, finger = customFinger, 
-  lidFinger = customFinger, 2D = customDisplay, bolt = customBolt, alpha = cAlpha);
+tSlotBox(size = customS, material =  customMaterial, finger = customFinger, 
+  lidFinger = customFinger, layout = customDisplay, bolt = customBolt, alpha = cAlpha);
 
 cF = customFinger;
 if ( cF > customX/3 || cF > customY/3 || cF > customZ/3) {
@@ -76,6 +76,8 @@ customTolerance = 0.0; //[-0.9:0.05:0.9]
   =====start documentation=====
   Create nuts, bolts, washers, tslots 
 
+  This library was created to make adding nuts and bolts to 3D and 2D designs easier. The library provides features for making cut-outs for captive nuts and washers, bolt holes and t-slot joints.  Check the documentation below for more information.
+
   Aaron Ciuffo - http://www.thingiverse.com/txoof/about, 
   Reach me also at gmail: aaron.ciuffo
 
@@ -85,19 +87,20 @@ customTolerance = 0.0; //[-0.9:0.05:0.9]
 
   Revision of http://www.thingiverse.com/thing:1220331
 
-  Based heavily on http://www.thingiverse.com/thing:965737 by biomushroom
 
-  Thread algorithm based on http://www.thingiverse.com/thing:27183 by Trevor Moseley
+  ##### Thanks to:
+  * Biomushroom: http://www.thingiverse.com/thing:965737 by biomushroom
+  * TrevorM: Thread algorythm based on http://www.thingiverse.com/thing:27183 by Trevor Moseley
 
   
 
-  ISSUES:
+  ##### ISSUES:
     * only metric threads have been implemented
     * grub/set screws do not have socket heads
     * nodes do not work properly for sizes above M4
     * button head size is a bit of a fudge. 
 
-  TODO:
+  ##### TODO:
     * add socket to grub screws
 
 
@@ -885,36 +888,37 @@ module tSlotDemo() {
 }
 
 module demo(text = true) {
-  space = metric_fastener[3][4]*2; // spacing
+  space = metric_fastener[3][4]*2; // spacing in the display grid
   
   // types of threads and fasteners
-  // "nut", "washer" and "text plac holder" need to be last three elements
+  // "nut", "washer" and "text place holder" need to be last three elements
+  
+  // type of object to render in each column
   types =  ["conical", "socket", "hex", "flatHead", "button", "grub", "nut", 
             "washer", "text place holder"];
 
-  //colors = ["red", "orange", "gold", "green", "skyblue", "lavender", "violet"];
-
+  // options for each row to be rendered [thread type, quality]
   renderOpts = [["metric", 36], ["metric", 24], ["none", 23], ["none", 9]];
 
-
-  // this is a little brittle - the nut and washer section will break if more 
-  // head types are added 
+  // color options - this helps create a rainbowed grid
+  // see ../test/color_test.scad locally
   h = -33; // corse multiplier (rate of color change)
   ip = 7; // starting column in color space grid
   jp = 15; // starting row
   m = 1; // fine multiplier (rate of color change)
+
   for (i = [0:len(types)-1]) { // recurse the types of heads, and fasteners
 
-    if (text && i < len(types)-1) { // add labels
+    if (text && i < len(types)-1) { // add labels below X axis 
       translate([space*i, -len(types[i])-5, 0])
         rotate(90)
         text(str(types[i]), size = 3, halign = "center", valign = "center");
     }
 
-    for (j = [0:len(renderOpts)-1]) { // recurse the types of threads 
+    for (j = [0:len(renderOpts)-1]) { // recurse the render options 
 
 
-      r = 0.5+sin(h*(i+ip)*m)/2; // calculate red color
+      r = 0.5+sin(h*(i+ip)*m)/2; // calculate color s
       g = 0.5+sin(h*(j+jp)*m)/2;
       b = 0.5+sin(h*(i+j+jp+ip)*m)/2;
 
@@ -924,13 +928,13 @@ module demo(text = true) {
             bolt(head = types[i], threadType = renderOpts[j][0], 
                 quality = renderOpts[j][1]);
           } 
-          else if (i == len(types) - 3) {
+          else if (i == len(types) - 3) { // nuts should be third to last
             nut(threadType = renderOpts[j][0], quality = renderOpts[j][1]);
-          }
-          else if (i == len(types) - 2) {
+          } 
+          else if (i == len(types) - 2) { // washers should be second to last
             washer(quality = renderOpts[j][1]);
           }
-          else if ( text && i == len(types) - 1) { // add labels
+          else if ( text && i == len(types) - 1) { // add labels - last item in list
             color("blue")
             text(str("thread: ",renderOpts[j][0], "; quality: ", renderOpts[j][1] ), size = 3, valign = "center");
           }
@@ -941,28 +945,37 @@ module demo(text = true) {
 
 
 /*
+======start documentation
   Box with fingerjoints - Based on earlier version of Finger Joint Box
   http://www.thingiverse.com/thing:448592
   Aaron Ciuffo
   24 December 2015 
- 
-
-  To Do:
-    * write each face as separate module (front, back, left, etc.) to make modifications
-      simpler 
-
-  Issues:
-    X The thrown together model does not render the tslots correctly.
-    X bolt hole is ON the edge of each tab; this will not cut properly
-      - move hole in a bit
-      - add a bit to each tab
 
 
-  Thanks to: 
+#### Usage:
+ ##### tSlotBox(size = [X, Y, Z], material =  N, finger = N, lidFinger = N, layout = "layout tpe", bolt = N, alpha = R);
+  * size = [X, Y, Z] - X, Y, Z dimensions in mm
+  * material = N - material thickness
+  * finger = N - number of fingers
+  * lidFinger = N - this should be set to the same value as finger (
+  * layout = "layout type" - 2D (for DXF output), 3D (3D model for visualisation, flat - 3D printable flat version
+  * bolt = N - length of bolt
+  * alpha = R - real between 0 and 1 to adjust the transparency
+
+
+#### To Do:
+  * write each face as separate module (front, back, left, etc.) to make modifications simpler 
+  * remove lidFinger 
+
+
+
+#### Thanks to: 
   * Floppykiller for finding a bugs - http://www.thingiverse.com/Floppykiller/about
     - problem in tab extension 
     - problem in tSlot movement with material thickness
     - problem in bolt-hole placement
+
+=====end documentation
 */
 
 
@@ -1285,7 +1298,7 @@ module layout2D(size, finger, lidFinger, material, usableDiv, usableDivLid, bolt
   //separation of pieces
   separation = material*2+1;
   // calculate the most efficient layout
-  yDisplace = boxY > boxZ ? boxY : boxZ + separation;
+  yDisplace = boxY > boxZ ? boxY + separation : boxZ + separation;
 
   translate([])
     back(size = size, finger = finger, material = material, lidFinger = lidFinger, 
@@ -1439,8 +1452,59 @@ module layout3D(size, finger, lidFinger, material, usableDiv, usableDivLid,
 
 }
 
+module layout3DFlat(size, finger, lidFinger, material, usableDiv, usableDivLid, bolt) {
+  boxX = size[0];
+  boxY = size[1];
+  boxZ = size[2];
+  
+  //separation of pieces
+  separation = material*2+1;
+  // calculate the most efficient layout
+  yDisplace = boxY > boxZ ? boxY + separation: boxZ + separation;
 
-module fingerBox(size = [80, 50, 60], finger = 5, 
+  translate([])
+    color("red")
+    linear_extrude(height = material)
+    back(size = size, finger = finger, material = material, lidFinger = lidFinger, 
+         usableDiv = usableDiv, usableDivLid = usableDivLid, bolt = bolt);
+
+  translate([boxX+separation+boxY+separation, 0, 0])
+    color("darkred")
+    linear_extrude(height = material)
+    front(size = size, finger = finger, material = material, lidFinger = lidFinger, 
+          usableDiv = usableDiv, usableDivLid = usableDivLid, bolt = bolt);
+
+  translate([boxX/2+boxY/2+separation, 0, 0])
+    color("blue")
+    linear_extrude(height = material)
+    right(size = size, finger = finger, material = material, lidFinger = lidFinger,
+          usableDiv = usableDiv, usableDivLid = usableDivLid, bolt = bolt);
+
+  translate([boxX/2+boxY/2+separation, -yDisplace, 0])
+    color("darkblue")
+    linear_extrude(height = material)
+    left(size = size, finger = finger, material = material, lidFinger = lidFinger,
+        usableDiv = usableDiv, usableDivLid = usableDivLid, bolt = bolt);
+
+
+  translate([0, -boxZ/2-yDisplace/2-separation, 0])
+    color("lime")
+    linear_extrude(height = material)
+    top(size = size, finger = finger, material = material, lidFinger = lidFinger, 
+        usableDiv = usableDiv, usableDivLid = usableDivLid, 
+        lid = false, bolt = bolt);
+
+  translate([boxX+separation+boxY+separation, -boxZ/2-yDisplace/2-separation, 0])
+    color("green")
+    linear_extrude(height = material)
+    bottom(size = size, finger = finger, material = material, lidFinger = lidFinger, 
+        usableDiv = usableDiv, usableDivLid = usableDivLid, 
+        lid = false, bolt = bolt);
+}
+
+
+/*
+module tSlotBox(size = [80, 50, 60], finger = 5, 
                 lidFinger = 10, material = 3, 2D = true, alpha = .5, bolt = 10) {
   boxX = size[0];
   boxY = size[1];
@@ -1476,13 +1540,68 @@ module fingerBox(size = [80, 50, 60], finger = 5,
 
   
 }
+*/
 
-boltLen = 10;
+
+module tSlotBox(size = [80, 50, 60], finger = 5, 
+                lidFinger = 10, material = 3, layout = "2D", alpha = .5, bolt = 10) {
+  boxX = size[0];
+  boxY = size[1];
+  boxZ = size[2];
+
+  // calculate the maximum number of fingers and cuts possible
+  maxDivX = floor(boxX/finger);
+  maxDivY = floor(boxY/finger);
+  maxDivZ = floor(boxZ/finger);
+
+  // calculate the maximum number of fingers and cuts for the lid
+  maxDivLX = floor(boxX/lidFinger);
+  maxDivLY = floor(boxY/lidFinger);
+
+  // the usable divisions value must be odd for this layout
+  uDivX = (maxDivX%2)==0 ? maxDivX-3 : maxDivX-2;
+  uDivY = (maxDivY%2)==0 ? maxDivY-3 : maxDivY-2;
+  uDivZ = (maxDivZ%2)==0 ? maxDivZ-3 : maxDivZ-2;
+  usableDiv = [uDivX, uDivY, uDivZ];
+
+  uDivLX= (maxDivLX%2)==0 ? maxDivLX-3 : maxDivLX-2;
+  uDivLY= (maxDivLY%2)==0 ? maxDivLY-3 : maxDivLY-2;
+  usableDivLid = [uDivLX, uDivLY];
+
+  if (layout == "2D") {
+    layout2D(size = size, finger = finger, lidFinger = lidFinger, material = material,
+            usableDiv = usableDiv, usableDivLid = usableDivLid, bolt = bolt);
+  } else if  (layout == "3D") {
+    layout3D(size = size, finger = finger, lidFinger = lidFinger, material = material,
+            usableDiv = usableDiv, usableDivLid = usableDivLid, 
+            alpha = alpha, bolt = bolt);
+  } else if (layout == "flat") {
+    layout3DFlat(size = size, finger = finger, lidFinger = lidFinger, material = material,
+            usableDiv = usableDiv, usableDivLid = usableDivLid, 
+            alpha = alpha, bolt = bolt);
+
+  }
+
+
+
+  
+}
+
+
+
+
+
+
+
+
+boltLen = 15;
 
 d = true;
 
-d = false;
+//d = false;
 finger = 16;
 
-//fingerBox(size = [60, 40, 30], material =  3, finger = finger, 
-//  lidFinger = finger, 2D = d, bolt = boltLen, alpha = 0.60);
+//tSlotBox(size = [50, 50, 50], material =  3, finger = finger, lidFinger = finger, 2D = d, bolt = boltLen, alpha = 0.60);
+
+
+//tSlotBox(size = [50, 50, 50], material =  3, finger = finger, lidFinger = finger, layout = "3D", bolt = boltLen, alpha = 0.60);

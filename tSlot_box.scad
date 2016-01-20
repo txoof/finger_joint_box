@@ -1,26 +1,35 @@
 /*
+======start documentation
   Box with fingerjoints - Based on earlier version of Finger Joint Box
   http://www.thingiverse.com/thing:448592
   Aaron Ciuffo
   24 December 2015 
- 
-
-  To Do:
-    * write each face as separate module (front, back, left, etc.) to make modifications
-      simpler 
-
-  Issues:
-    X The thrown together model does not render the tslots correctly.
-    X bolt hole is ON the edge of each tab; this will not cut properly
-      - move hole in a bit
-      - add a bit to each tab
 
 
-  Thanks to: 
+#### Usage:
+ ##### tSlotBox(size = [X, Y, Z], material =  N, finger = N, lidFinger = N, layout = "layout tpe", bolt = N, alpha = R);
+  * size = [X, Y, Z] - X, Y, Z dimensions in mm
+  * material = N - material thickness
+  * finger = N - number of fingers
+  * lidFinger = N - this should be set to the same value as finger (
+  * layout = "layout type" - 2D (for DXF output), 3D (3D model for visualisation, flat - 3D printable flat version
+  * bolt = N - length of bolt
+  * alpha = R - real between 0 and 1 to adjust the transparency
+
+
+#### To Do:
+  * write each face as separate module (front, back, left, etc.) to make modifications simpler 
+  * remove lidFinger 
+
+
+
+#### Thanks to: 
   * Floppykiller for finding a bugs - http://www.thingiverse.com/Floppykiller/about
     - problem in tab extension 
     - problem in tSlot movement with material thickness
     - problem in bolt-hole placement
+
+=====end documentation
 */
 
 
@@ -343,7 +352,7 @@ module layout2D(size, finger, lidFinger, material, usableDiv, usableDivLid, bolt
   //separation of pieces
   separation = material*2+1;
   // calculate the most efficient layout
-  yDisplace = boxY > boxZ ? boxY : boxZ + separation;
+  yDisplace = boxY > boxZ ? boxY + separation : boxZ + separation;
 
   translate([])
     back(size = size, finger = finger, material = material, lidFinger = lidFinger, 
@@ -497,8 +506,59 @@ module layout3D(size, finger, lidFinger, material, usableDiv, usableDivLid,
 
 }
 
+module layout3DFlat(size, finger, lidFinger, material, usableDiv, usableDivLid, bolt) {
+  boxX = size[0];
+  boxY = size[1];
+  boxZ = size[2];
+  
+  //separation of pieces
+  separation = material*2+1;
+  // calculate the most efficient layout
+  yDisplace = boxY > boxZ ? boxY + separation: boxZ + separation;
 
-module fingerBox(size = [80, 50, 60], finger = 5, 
+  translate([])
+    color("red")
+    linear_extrude(height = material)
+    back(size = size, finger = finger, material = material, lidFinger = lidFinger, 
+         usableDiv = usableDiv, usableDivLid = usableDivLid, bolt = bolt);
+
+  translate([boxX+separation+boxY+separation, 0, 0])
+    color("darkred")
+    linear_extrude(height = material)
+    front(size = size, finger = finger, material = material, lidFinger = lidFinger, 
+          usableDiv = usableDiv, usableDivLid = usableDivLid, bolt = bolt);
+
+  translate([boxX/2+boxY/2+separation, 0, 0])
+    color("blue")
+    linear_extrude(height = material)
+    right(size = size, finger = finger, material = material, lidFinger = lidFinger,
+          usableDiv = usableDiv, usableDivLid = usableDivLid, bolt = bolt);
+
+  translate([boxX/2+boxY/2+separation, -yDisplace, 0])
+    color("darkblue")
+    linear_extrude(height = material)
+    left(size = size, finger = finger, material = material, lidFinger = lidFinger,
+        usableDiv = usableDiv, usableDivLid = usableDivLid, bolt = bolt);
+
+
+  translate([0, -boxZ/2-yDisplace/2-separation, 0])
+    color("lime")
+    linear_extrude(height = material)
+    top(size = size, finger = finger, material = material, lidFinger = lidFinger, 
+        usableDiv = usableDiv, usableDivLid = usableDivLid, 
+        lid = false, bolt = bolt);
+
+  translate([boxX+separation+boxY+separation, -boxZ/2-yDisplace/2-separation, 0])
+    color("green")
+    linear_extrude(height = material)
+    bottom(size = size, finger = finger, material = material, lidFinger = lidFinger, 
+        usableDiv = usableDiv, usableDivLid = usableDivLid, 
+        lid = false, bolt = bolt);
+}
+
+
+/*
+module tSlotBox(size = [80, 50, 60], finger = 5, 
                 lidFinger = 10, material = 3, 2D = true, alpha = .5, bolt = 10) {
   boxX = size[0];
   boxY = size[1];
@@ -534,6 +594,59 @@ module fingerBox(size = [80, 50, 60], finger = 5,
 
   
 }
+*/
+
+
+module tSlotBox(size = [80, 50, 60], finger = 5, 
+                lidFinger = 10, material = 3, layout = "2D", alpha = .5, bolt = 10) {
+  boxX = size[0];
+  boxY = size[1];
+  boxZ = size[2];
+
+  // calculate the maximum number of fingers and cuts possible
+  maxDivX = floor(boxX/finger);
+  maxDivY = floor(boxY/finger);
+  maxDivZ = floor(boxZ/finger);
+
+  // calculate the maximum number of fingers and cuts for the lid
+  maxDivLX = floor(boxX/lidFinger);
+  maxDivLY = floor(boxY/lidFinger);
+
+  // the usable divisions value must be odd for this layout
+  uDivX = (maxDivX%2)==0 ? maxDivX-3 : maxDivX-2;
+  uDivY = (maxDivY%2)==0 ? maxDivY-3 : maxDivY-2;
+  uDivZ = (maxDivZ%2)==0 ? maxDivZ-3 : maxDivZ-2;
+  usableDiv = [uDivX, uDivY, uDivZ];
+
+  uDivLX= (maxDivLX%2)==0 ? maxDivLX-3 : maxDivLX-2;
+  uDivLY= (maxDivLY%2)==0 ? maxDivLY-3 : maxDivLY-2;
+  usableDivLid = [uDivLX, uDivLY];
+
+  if (layout == "2D") {
+    layout2D(size = size, finger = finger, lidFinger = lidFinger, material = material,
+            usableDiv = usableDiv, usableDivLid = usableDivLid, bolt = bolt);
+  } else if  (layout == "3D") {
+    layout3D(size = size, finger = finger, lidFinger = lidFinger, material = material,
+            usableDiv = usableDiv, usableDivLid = usableDivLid, 
+            alpha = alpha, bolt = bolt);
+  } else if (layout == "flat") {
+    layout3DFlat(size = size, finger = finger, lidFinger = lidFinger, material = material,
+            usableDiv = usableDiv, usableDivLid = usableDivLid, 
+            alpha = alpha, bolt = bolt);
+
+  }
+
+
+
+  
+}
+
+
+
+
+
+
+
 
 boltLen = 15;
 
@@ -542,4 +655,7 @@ d = true;
 //d = false;
 finger = 16;
 
-fingerBox(size = [50, 50, 50], material =  3, finger = finger, lidFinger = finger, 2D = d, bolt = boltLen, alpha = 0.60);
+//tSlotBox(size = [50, 50, 50], material =  3, finger = finger, lidFinger = finger, 2D = d, bolt = boltLen, alpha = 0.60);
+
+
+//tSlotBox(size = [50, 50, 50], material =  3, finger = finger, lidFinger = finger, layout = "3D", bolt = boltLen, alpha = 0.60);
