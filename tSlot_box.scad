@@ -535,7 +535,7 @@ module fingerBox(size = [80, 50, 60], finger = 5,
   
 }
 
-boltLen = 10;
+boltLen = 15;
 
 d = true;
 
