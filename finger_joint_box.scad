@@ -179,7 +179,7 @@ module layout2D(size, finger, lidFinger, material, usableDiv, usableDivLid) {
   // calculate the most efficient layout
   yDisplace = boxY > boxZ ? boxY : boxZ + separation;
 
-  translate([])
+  translate([0, 0, 0])
     color("Red")
       faceA(size = size, finger = finger, material = material, lidFinger = lidFinger, 
             usableDiv = usableDiv, usableDivLid = usableDivLid);
