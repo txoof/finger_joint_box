@@ -2,11 +2,10 @@
   Box with fingerjoints - Based on earlier version of Finger Joint Box
   http://www.thingiverse.com/thing:448592
   Aaron Ciuffo
-  24 December 2015 
+  rewrite to be easier to use as a library
+  24 June 2019
 */
 
-
-//include <../libraries/nuts_and_bolts.scad>
 /* [Box Dimensions] */
 // Box X dimension
 customX = 100;
@@ -17,49 +16,74 @@ customZ = 40;
 
 // Finger & Cut width (sides, bottom) - must be < 1/3 shortest side
 customFinger = 10;
-// Finger & Cut wdith on lid only - must be < 1/3 shortest X or Y 
+// Finger & Cut wdith on lid only - must be < 1/3 shortest X or Y
 customLidFinger = 20;
+
+//Material thickness
+customMaterial=3;
 
 /* [Layout Option] */
 // layout 2D or 3D style - THINGIVERSE CANNOT OUTPUT 2D STLS!
 customLayout2D = 0; // [0:3D layout for visualization, 1:2D layout for DXF output]
 
 /* [Hidden] */
-customSize = [customX, customY, customZ];
-o = .001; // overage for cutting 
+// assign the variable for the demo module
+tSize=[customX, customY, customZ];
+tFinger=customFinger;
+tLidFinger=customLidFinger;
+tMaterial=customMaterial;
+t2D=0;
+tAlpha=0.5;
 
 
-// cuts that fall completely inside the edge
-module insideCuts(length, finger, cutD, uDiv) {
-  numFinger = floor(uDiv/2);
-  numCuts = ceil(uDiv/2);
+function usableDiv(divs) =
+  [divs[0]%2==0 ? divs[0]-3 : divs[0]-2,
+   divs[1]%2==0 ? divs[1]-3 : divs[1]-2,
+   divs[2]%2==0 ? divs[2]-3 : divs[2]-2];
 
-  myCutD = cutD+o; // add an overage to make the cut complete
-  // draw rectangles to make slots
+
+//calculate max number of fingers and cuts possible
+function maxDiv(size, finger) =
+  [floor(size[0]/finger),
+   floor(size[1]/finger),
+   floor(size[2]/finger)];
+
+module insideCuts(length, finger, cutD, div) {
+  //make cuts entirely inside the length of the edge
+  numFinger = floor(div/2);
+  numCuts = ceil(div/2);
+
+  //add a little to the cut depth to avoid Z-Fighting
+  myCutD = cutD+0.001;
+
+  //draw rectangeles to make the negative slots
   for (i=[0:numCuts-1]) {
     translate([i*finger*2, 0, 0])
       square([finger, myCutD]);
   }
 }
 
-module outsideCuts(length, finger, cutD, uDiv) {
-  numFinger = ceil(uDiv/2);
-  numCuts = floor(uDiv/2);
+module outsideCuts(length, finger, cutD, div) {
+  //make cuts that fall outiside of the edge
+  numFinger = ceil(div/2);
+  numCuts = floor(div/2);
 
-  myCutD = cutD+o; // add an overage in to make cuts slightly larger
+  //add a little to the cut depth to avoid Z-Fighting
+  myCutD = cutD+0.001;
 
+  //calculate the length of the extra long cut at either end of the edge
+  endCut = (length-div*finger)/2;
 
-  // calculate the length of the extra long cut at either end
-  endCut = (length-uDiv*finger)/2;
-  // amount of padding to add to the itterative placement of cuts
-  // this is the extra long cut at either end
+  //amount of padding to add to the itteratigve placement of cuts
+  //this is the extra long cut at either end
   padding = endCut+finger;
 
   square([endCut, myCutD]);
 
-  for (i = [0:numCuts]) {
+  //draw rectangeles to make the negative slots
+  for (i=[0:numCuts]) {
     if (i < numCuts) {
-      translate([i*(finger*2)+padding, 0, 0])
+     translate([i*(finger*2)+padding, 0, 0])
         square([finger, myCutD]);
     } else {
       translate([i*finger*2+padding, 0, 0])
@@ -69,238 +93,180 @@ module outsideCuts(length, finger, cutD, uDiv) {
 }
 
 
-// Face A (X and Z dimensions)
-// front and back face
-module faceA(size, finger, lidFinger, material, usableDiv, usableDivLid) {
-  uDivX = usableDiv[0];
-  uDivZ = usableDiv[2];
-  uDivLX = usableDivLid[0];
-  uDivLZ = usableDivLid[2];
-
-  boxX = size[0];
-  boxY = size[1];
-  boxZ = size[2];
+module faceA(size, finger, lidFinger, material) {
+  maxDivs = maxDiv(size, finger);
+  uDiv = usableDiv(maxDivs);
+  uDivLid = usableDiv(maxDiv(size, lidFinger));
 
   difference() {
-    square([boxX, boxZ], center = true);
+    square([size[0], size[2]], center=true);
+    // X+/- edge (X axis in OpenScad)
+    translate([-uDivLid[0]*lidFinger/2, size[2]/2-material, 0])
+      insideCuts(length=size[0], finger=lidFinger, cutD=material, div=uDivLid[0]);
+   // translate([-uDiv[0]*finger/2, -size[2], 0]
+    translate([-uDiv[0]*finger/2, -size[2]/2, 0])
+      insideCuts(length=size[0], finger=finger, cutD=material, div=uDiv[0]);
 
-    // X+/- edge (X axis in openSCAD)
-    translate([-uDivLX*lidFinger/2, boxZ/2-material, 0])
-      insideCuts(length = boxX, finger = lidFinger, cutD = material, uDiv = uDivLX);
+    // Z+/- edge (Y axis)
+    translate([size[0]/2-material, uDiv[2]*finger/2, 0])
+    rotate([0, 0, -90])
+      insideCuts(length=size[2], finger=finger, cutD=material, div=uDiv[2]);
 
-    translate([-uDivX*finger/2, -boxZ/2-o, 0]) // -o to move outside
-      insideCuts(length = boxX, finger = finger, cutD = material, uDiv = uDivX);
-
-    // Z+/- edge (Y axis in OpenSCAD)
-    translate([boxX/2-material, uDivZ*finger/2, 0]) rotate([0, 0, -90])
-      insideCuts(length = boxZ, finger = finger, cutD = material, uDiv = uDivZ);
-    translate([-boxX/2-o, uDivZ*finger/2, 0]) rotate([0, 0, -90]) // -o to move outside
-      insideCuts(length = boxZ, finger = finger, cutD = material, uDiv = uDivZ);
-  } // end difference
-}
-
-// Face B (X and Y dimensions)
-// lid and base
-module faceB(size, finger, lidFinger, material, usableDiv, usableDivLid, lid = false) {
-  
-  // if this is the lid, use different settings than if it is the base
-  uDivX = lid == true ? usableDivLid[0] : usableDiv[0];
-  uDivY = lid == true ? usableDivLid[1] : usableDiv[1];
-  myFinger = lid == true ? lidFinger : finger;
-
-  //uDivX = finger != lidFinger ? usableDivLid[0] : usableDiv[0];
-  //uDivY = finger != lidFinger ? usableDivLid[1] : usableDiv[1];
-  //myFinger = finger != lidFinger ? lidFinger : finger;
-  
-  boxX = size[0];
-  boxY = size[1];
-  boxZ = size[2];
-  
-  difference() {
-    square([boxX, boxY], center = true);
-
-    // X+/- edge
-    translate([-boxX/2, boxY/2-material, 0])
-      outsideCuts(length = boxX, finger = myFinger, cutD = material, uDiv = uDivX);
-    translate([-boxX/2, -boxY/2-o, 0]) // -o to move the cuts completely outside the face
-      outsideCuts(length = boxX, finger = myFinger, cutD = material, uDiv = uDivX);
-
-    // Y+/- edge 
-    translate([boxX/2-material, uDivY*myFinger/2, 0]) rotate([0, 0, -90])
-      insideCuts(length = boxY, finger = myFinger, cutD = material, uDiv = uDivY);      
-    translate([-boxX/2-o, uDivY*myFinger/2, 0]) rotate([0, 0, -90]) // -o to move
-      insideCuts(length = boxY, finger = myFinger, cutD = material, uDiv = uDivY);      
+    translate([-size[0]/2, uDiv[2]*finger/2, 0])
+    rotate([0, 0, -90])
+      insideCuts(length=size[2], finger=finger, cutD=material, div=uDiv[2]);
   }
-  
 }
 
-// Face C (Z and Y dimensions)
-// left and right sides
-module faceC(size, finger, lidFinger, material, usableDiv, usableDivLid) {
-  uDivX = usableDiv[0];
-  uDivY = usableDiv[1];
-  uDivZ = usableDiv[2];
-  uDivLX = usableDivLid[0];
-  uDivLY = usableDivLid[1];
-  uDivLZ = usableDivLid[2];
+module faceB(size, finger, lidFinger, material, lid=false) {
+  //lid and base
+  maxDivs = lid==true ? maxDiv(size, lidFinger) : maxDiv(size, finger);
+  uDiv = usableDiv(maxDivs);
 
-  boxX = size[0];
-  boxY = size[1];
-  boxZ = size[2];
+  myFinger = lid==true ? lidFinger : finger;
 
   difference() {
-    square([boxY, boxZ], center = true);
+    square([size[0], size[1]], center=true);
 
-    //Y+/- edge (X axis in OpenSCAD)
-    // lid edge
-    translate([-boxY/2, boxZ/2-material, 0])
-      outsideCuts(length = boxY, finger = lidFinger, cutD = material, uDiv = uDivLY);
-    // bottom edge
-    translate([-boxY/2, -boxZ/2-o, 0]) // -o to move outside
-      outsideCuts(length = boxY, finger = finger, cutD = material, uDiv = uDivY);
+    //X+/= edge (X axis in view window)
+    translate([-size[0]/2, size[1]/2-material, 0])
+      outsideCuts(length=size[0], finger=myFinger, cutD=material, div=uDiv[0]);
+    translate([-size[0]/2, -size[1]/2, 0])
+      outsideCuts(length=size[0], finger=myFinger, cutD=material, div=uDiv[0]);
 
-    //Z+/- edge (Y axis in OpenSCAD)
-    translate([boxY/2-material, boxZ/2, 0]) rotate([0, 0, -90])
-      outsideCuts(length = boxZ, finger = finger, cutD = material, uDiv = uDivZ);
-    translate([-boxY/2-o, boxZ/2, 0]) rotate([0, 0, -90]) // -o to move outside
-      outsideCuts(length = boxZ, finger = finger, cutD = material, uDiv = uDivZ);
+    //Y+/- edge (Y axis in view window)
+    translate([size[0]/2-material, uDiv[1]*myFinger/2, 0])
+    rotate([0, 0, -90])
+      insideCuts(length=size[1], finger=myFinger, cutD=material, div=uDiv[1]);
+    translate([-size[0]/2, uDiv[1]*myFinger/2, 0])
+    rotate([0, 0, -90])
+      insideCuts(length=size[1], finger=myFinger, cutD=material, div=uDiv[1]);
   }
-
 }
 
 
-module layout2D(size, finger, lidFinger, material, usableDiv, usableDivLid) {
-  boxX = size[0];
-  boxY = size[1];
-  boxZ = size[2];
+module faceC(size, finger, lidFinger, material) {
+  maxDivs = maxDiv(size, finger);
+  uDiv = usableDiv(maxDivs);
+  uDivLid = usableDiv(maxDiv(size, lidFinger));
 
+  difference() {
+    square([size[1], size[2]], center=true);
+
+    //Y+/- edge (X asis in view window)
+    translate([-size[1]/2, size[2]/2-material, 0])
+      outsideCuts(length=size[1], finger=lidFinger, cutD=material, div=uDivLid[1]);
+    translate([-size[1]/2, -size[2]/2, 0])
+      outsideCuts(length=size[1], finger=finger, cutD=material, div=uDiv[1]);
+
+    //Z+/- edge (Y axis in view window)
+    translate([size[1]/2-material, size[2]/2, 0])
+    rotate([0, 0, -90])
+      outsideCuts(length=size[2], finger=finger, cutD=material, div=uDiv[2]);
+    translate([-size[1]/2, size[2]/2, 0])
+    rotate([0, 0, -90])
+      outsideCuts(length=size[2], finger=finger, cutD=material, div=uDiv[2]);
+  }
+}
+
+module layout2D(size=[50, 80, 60], finger=5, lidFinger=10, material=3) {
   //separation of pieces
   separation = 1.5;
-  // calculate the most efficient layout
-  yDisplace = boxY > boxZ ? boxY : boxZ + separation;
+  //calculate the most efficient layout
+  yDisplace = size[1] > size[2] ? size[1] : size[2] + separation;
 
+  echo("faceA");
   translate([0, 0, 0])
     color("Red")
-      faceA(size = size, finger = finger, material = material, lidFinger = lidFinger, 
-            usableDiv = usableDiv, usableDivLid = usableDivLid);
-  translate([boxX+separation+boxY+separation, 0, 0])
+    faceA(size=size, finger=finger, material=material, lidFinger=lidFinger);
+
+  translate([size[0]+separation+size[1]+separation, 0, 0])
     color("darkred")
-      faceA(size = size, finger = finger, material = material, lidFinger = lidFinger, 
-            usableDiv = usableDiv, usableDivLid = usableDivLid);
+    faceA(size=size, finger=finger, material=material, lidFinger=lidFinger);
 
-  translate([boxX/2+boxY/2+separation, 0, 0])
+
+  translate([size[0]/2+size[1]/2+separation, 0, 0])
     color("blue")
-      faceC(size = size, finger = finger, material = material, lidFinger = lidFinger,
-            usableDiv = usableDiv, usableDivLid = usableDivLid);
-  translate([boxX/2+boxY/2+separation, -yDisplace, 0])
+    faceC(size=size, finger=finger, material=material, lidFinger=lidFinger);
+
+  translate([size[0]/2+size[1]/2+separation, -yDisplace, 0])
     color("darkblue")
-      faceC(size = size, finger = finger, material = material, lidFinger = lidFinger,
-            usableDiv = usableDiv, usableDivLid = usableDivLid);
+    faceC(size=size, finger=finger, material=material, lidFinger=lidFinger);
 
 
-  translate([0, -boxZ/2-yDisplace/2-separation, 0])
+
+  translate([0, -size[2]/2-yDisplace/2-separation, 0])
     color("lime")
-      faceB(size = size, finger = finger, material = material, lidFinger = lidFinger, 
-            usableDiv = usableDiv, usableDivLid = usableDivLid, lid = true);
+    faceB(size=size, finger=finger, material=material, lidFinger=lidFinger, lid=true);
 
-  translate([boxX+separation+boxY+separation, -boxZ/2-yDisplace/2-separation, 0])
+  translate([size[0]+separation+size[1]+separation, -size[2]/2-yDisplace/2-separation, 0])
     color("green")
-      faceB(size = size, finger = finger, material = material, lidFinger = lidFinger, 
-            usableDiv = usableDiv, usableDivLid = usableDivLid, lid = false);
+    faceB(size=size, finger=finger, material=material, lidFinger=lidFinger);
+
 }
 
-module layout3D(size, finger, lidFinger, material, usableDiv, usableDivLid, alpha) {
-  boxX = size[0];
-  boxY = size[1];
-  boxZ = size[2];
+module layout3D(size, finger, lidFinger, material, alpha=0.5) {
+  //create a 3D model of the box
 
-  // amount to shift to account for thickness of material
+  //amount to shift to account for thickness of material
   D = material/2;
 
-  // this is the base
-  color("green", alpha = alpha)
-    translate([])
-    linear_extrude(height = material, center = true)
-    faceB(size = size, finger = finger, material = material, lidFinger = lidFinger, 
-          usableDiv = usableDiv, usableDivLid = usableDivLid, lid = false);
+  //base
+  color("green", alpha=alpha)
+    translate([0, 0, 0])
+    linear_extrude(height=material, center=true)
+      faceB(size=size, finger=finger, material=material, lidFinger=lidFinger);
 
-  // this is the "lid"
-  color("lime", alpha = alpha)
-    translate([0, 0, boxZ-material])
-    linear_extrude(height = material, center = true)
-    faceB(size = size, finger = finger, material = material, lidFinger = lidFinger, 
-          usableDiv = usableDiv, usableDivLid = usableDivLid, lid = true);
+  //lid
+  color("lime", alpha=alpha)
+    translate([0, 0, size[2]-material])
+    linear_extrude(height=material, center=true)
+      faceB(size=size, finger=finger, material=material, lidFinger=lidFinger, lid=true);
 
-
-  color("red", alpha = alpha)
-    translate([0, boxY/2-D, boxZ/2-D])
+  color("red", alpha=alpha)
+    translate([0, size[1]/2-D, size[2]/2-D])
     rotate([90, 0, 0])
-    linear_extrude(height = material, center = true)
-    faceA(size = size, finger = finger, material = material, lidFinger = lidFinger, 
-         usableDiv = usableDiv, usableDivLid = usableDivLid);
-    
+    linear_extrude(height=material, center=true)
+      faceA(size=size, finger=finger, material=material, lidFinger=lidFinger);
 
-  color("darkred", alpha = alpha)
-    translate([0, -boxY/2+D, boxZ/2-D])
+  color("darkred", alpha=alpha)
+    translate([0, -size[1]/2+D, size[2]/2-D])
     rotate([90, 0, 0])
-    linear_extrude(height = material, center = true)
-    faceA(size = size, finger = finger, material = material, lidFinger = lidFinger, 
-         usableDiv = usableDiv, usableDivLid = usableDivLid);
-  
-  color("blue", alpha = alpha)
-    translate([boxX/2-D, 0, boxZ/2-D])
-    rotate([90, 0, 90])
-    linear_extrude(height = material, center = true)
-    faceC(size = size, finger = finger, material = material, lidFinger = lidFinger,
-          usableDiv = usableDiv, usableDivLid = usableDivLid);
+    linear_extrude(height=material, center=true)
+      faceA(size=size, finger=finger, material=material, lidFinger=lidFinger);
 
-  color("darkblue", alpha = alpha)
-    translate([-boxX/2+D, 0, boxZ/2-D])
+  color("blue", alpha=alpha)
+    translate([size[0]/2-D, 0, size[2]/2-D])
     rotate([90, 0, 90])
-    linear_extrude(height = material, center = true)
-    faceC(size = size, finger = finger, material = material, lidFinger = lidFinger,
-          usableDiv = usableDiv, usableDivLid = usableDivLid);
+    linear_extrude(height=material, center=true)
+      faceC(size=size, finger=finger, material=material, lidFinger=lidFinger);
+
+
+  color("darkblue", alpha=alpha)
+    translate([-size[0]/2+D, 0, size[2]/2-D])
+    rotate([90, 0, 90])
+    linear_extrude(height=material, center=true)
+      faceC(size=size, finger=finger, material=material, lidFinger=lidFinger);
+
+
 
 }
 
 
-module fingerBox(size = [50, 80, 60], finger = 5, 
-                lidFinger = 10, material = 3, 2D = true, alpha = .5) {
-  boxX = size[0];
-  boxY = size[1];
-  boxZ = size[2];
+module fingerBox(size=[50, 40, 70], finger=5, lidFinger=10, material=3, l2D=false,
+alpha=0.5) {
 
-  // calculate the maximum number of fingers and cuts possible
-  maxDivX = floor(boxX/finger);
-  maxDivY = floor(boxY/finger);
-  maxDivZ = floor(boxZ/finger);
-
-  // calculate the maximum number of fingers and cuts for the lid
-  maxDivLX = floor(boxX/lidFinger);
-  maxDivLY = floor(boxY/lidFinger);
-
-  // the usable divisions value must be odd for this layout
-  uDivX = (maxDivX%2)==0 ? maxDivX-3 : maxDivX-2;
-  uDivY = (maxDivY%2)==0 ? maxDivY-3 : maxDivY-2;
-  uDivZ = (maxDivZ%2)==0 ? maxDivZ-3 : maxDivZ-2;
-  usableDiv = [uDivX, uDivY, uDivZ];
-
-  uDivLX= (maxDivLX%2)==0 ? maxDivLX-3 : maxDivLX-2;
-  uDivLY= (maxDivLY%2)==0 ? maxDivLY-3 : maxDivLY-2;
-  usableDivLid = [uDivLX, uDivLY];
-
-  if (2D) {
-    layout2D(size = size, finger = finger, lidFinger = lidFinger, material = material,
-            usableDiv = usableDiv, usableDivLid = usableDivLid);
+  if(l2D) {
+    layout2D(size=size, finger=finger, material=material, lidFinger=lidFinger);
   } else {
-    layout3D(size = size, finger = finger, lidFinger = lidFinger, material = material,
-            usableDiv = usableDiv, usableDivLid = usableDivLid, alpha = alpha);
+    layout3D(size=size, finger=finger, material=material, lidFinger=lidFinger,
+             alpha=alpha);
   }
 
-  
 }
 
-//fingerBox(size = [100, 70, 60], finger = 10, lidFinger = 21, 2D = true);
 
-fingerBox(size = customSize, finger = customFinger, lidFinger = customLidFinger, 
-          2D = customLayout2D);
+//layout2D(size=[50, 80, 60], finger=5, lidFinger=10, material=3);
+//layout3D(size=[50, 80, 60], finger=5, lidFinger=10, material=3);
+
+fingerBox(size=tSize, finger=tFinger, lidFinger=tLidFinger, material=tMaterial, l2D=t2D, alpha=tAlpha);
