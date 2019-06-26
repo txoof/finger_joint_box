@@ -169,6 +169,110 @@ module faceC(size, finger, lidFinger, material) {
   }
 }
 
+module layout(size, material, 2D=true, alpha=0.5, v=true) {
+
+  if (v) {
+    echo("parameters:");
+    echo("material (thickness of material)");
+    echo("size ([X, Y, Z] - dimensions of box)");
+    echo("2D (boolean - childrender in 2D or 3D)");
+    echo("alpha (real between 0, 1 - transparency of 3D model)");
+    echo(" ");
+    echo("requires six children faces provided in the order below");
+    echo("face relative XYZs are shown along with childrendering colors");
+    echo("layout2D() { faceA(-XZ red); faceA(+XZ darkred); faceB(-XY lime); faceB(+XY green); faceC(-YZ blue); faceC(+YZ darkblue);}");
+  }
+
+
+  if(2D) {
+    //separation of pieces for 2D layout
+    separation = 1.5;
+    //calculate the most efficient layout for 2D layout
+    yDisplace = size[1] > size[2] ? size[1] : size[2] + separation;
+
+
+    translate([0, 0, 0])
+      color("Red")
+      //faceA(size=size, finger=finger, material=material, lidFinger=lidFinger);
+      children(0);
+    
+    translate([size[0]+separation+size[1]+separation, 0, 0])
+      color("darkred")
+      //faceA(size=size, finger=finger, material=material, lidFinger=lidFinger);
+      children(1);
+
+    translate([size[0]/2+size[1]/2+separation, 0, 0])
+      color("blue")
+      //faceC(size=size, finger=finger, material=material, lidFinger=lidFinger);
+      children(4);
+
+    translate([size[0]/2+size[1]/2+separation, -yDisplace, 0])
+      color("darkblue")
+      //faceC(size=size, finger=finger, material=material, lidFinger=lidFinger);
+      children(5);
+
+
+    translate([0, -size[2]/2-yDisplace/2-separation, 0])
+      color("lime")
+      //faceB(size=size, finger=finger, material=material, lidFinger=lidFinger, lid=true);
+      children(2);
+
+    translate([size[0]+separation+size[1]+separation, -size[2]/2-yDisplace/2-separation, 0])
+      color("green")
+      //faceB(size=size, finger=finger, material=material, lidFinger=lidFinger);
+      children(3);
+  } else {
+    //draw 3d model
+    //amount to shift to account for thickness of material
+    D = material/2;
+
+    //base
+    color("green", alpha=alpha)
+      translate([0, 0, 0])
+      linear_extrude(height=material, center=true)
+        //faceB(size=size, finger=finger, material=material, lidFinger=lidFinger);
+        children(2);
+
+    //lid
+    color("lime", alpha=alpha)
+      translate([0, 0, size[2]-material])
+      linear_extrude(height=material, center=true)
+        //faceB(size=size, finger=finger, material=material, lidFinger=lidFinger, lid=true);
+        children(3);
+
+    color("red", alpha=alpha)
+      translate([0, size[1]/2-D, size[2]/2-D])
+      rotate([90, 0, 0])
+      linear_extrude(height=material, center=true)
+        //faceA(size=size, finger=finger, material=material, lidFinger=lidFinger);
+        children(0);
+
+    color("darkred", alpha=alpha)
+      translate([0, -size[1]/2+D, size[2]/2-D])
+      rotate([90, 0, 0])
+      linear_extrude(height=material, center=true)
+        //faceA(size=size, finger=finger, material=material, lidFinger=lidFinger);
+        children(1);
+
+    color("blue", alpha=alpha)
+      translate([size[0]/2-D, 0, size[2]/2-D])
+      rotate([90, 0, 90])
+      linear_extrude(height=material, center=true)
+        //faceC(size=size, finger=finger, material=material, lidFinger=lidFinger);
+        children(4);
+
+
+    color("darkblue", alpha=alpha)
+      translate([-size[0]/2+D, 0, size[2]/2-D])
+      rotate([90, 0, 90])
+      linear_extrude(height=material, center=true)
+        //faceC(size=size, finger=finger, material=material, lidFinger=lidFinger);
+        children(5);
+  }
+}
+
+
+
 module layout2D(size=[50, 80, 60], finger=5, lidFinger=10, material=3) {
   //separation of pieces
   separation = 1.5;
@@ -269,4 +373,18 @@ alpha=0.5) {
 //layout2D(size=[50, 80, 60], finger=5, lidFinger=10, material=3);
 //layout3D(size=[50, 80, 60], finger=5, lidFinger=10, material=3);
 
-fingerBox(size=tSize, finger=tFinger, lidFinger=tLidFinger, material=tMaterial, l2D=t2D, alpha=tAlpha);
+//fingerBox(size=tSize, finger=tFinger, lidFinger=tLidFinger, material=tMaterial, l2D=t2D, alpha=tAlpha);
+
+myS = [50, 80, 60];
+myF = 5;
+myLF = 10;
+m = 3;
+
+layout(myS, m, 2D=false) {
+  faceA(myS, myF, myLF, m);
+  faceA(myS, myF, myLF, m);
+  faceB(myS, myF, myLF, m);
+  faceB(myS, myF, myLF, m, lid=true);
+  faceC(myS, myF, myLF, m);
+  faceC(myS, myF, myLF, m);
+}
