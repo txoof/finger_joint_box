@@ -195,7 +195,7 @@ module layout(size, material, 2D=true, alpha=0.5, v=true) {
       color("Red")
       //faceA(size=size, finger=finger, material=material, lidFinger=lidFinger);
       children(0);
-    
+ 
     translate([size[0]+separation+size[1]+separation, 0, 0])
       color("darkred")
       //faceA(size=size, finger=finger, material=material, lidFinger=lidFinger);
@@ -375,12 +375,13 @@ alpha=0.5) {
 
 //fingerBox(size=tSize, finger=tFinger, lidFinger=tLidFinger, material=tMaterial, l2D=t2D, alpha=tAlpha);
 
-myS = [50, 80, 60];
-myF = 5;
-myLF = 10;
-m = 3;
+myS = [customX, customY, customZ];
+myF = customFinger;
+myLF = customLidFinger;
+m = customMaterial;
+layout = customLayout2D;
 
-layout(myS, m, 2D=false) {
+layout(myS, m, 2D=layout) {
   faceA(myS, myF, myLF, m);
   faceA(myS, myF, myLF, m);
   faceB(myS, myF, myLF, m);
