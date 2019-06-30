@@ -12,7 +12,7 @@ customX = 100;
 // Box Y dimension
 customY = 60;
 // Box Z dimension
-customZ = 40;
+customZ = 40.; //[100.01]
 
 // Finger & Cut width (sides, bottom) - must be < 1/3 shortest side
 customFinger = 10;
@@ -20,7 +20,7 @@ customFinger = 10;
 customLidFinger = 20;
 
 //Material thickness
-customMaterial=3;
+customMaterial=3; //[0.1:0.05:10]
 
 /* [Layout Option] */
 // layout 2D or 3D style - THINGIVERSE CANNOT OUTPUT 2D STLS!
