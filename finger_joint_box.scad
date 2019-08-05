@@ -8,11 +8,11 @@
 
 /* [Box Dimensions] */
 // Box X dimension
-customX = 100;
+customX = 680;
 // Box Y dimension
-customY = 60;
+customY = 125;
 // Box Z dimension
-customZ = 40.; //[100.01]
+customZ = 140.; //[100.01]
 
 // Finger & Cut width (sides, bottom) - must be < 1/3 shortest side
 customFinger = 10;
@@ -93,7 +93,7 @@ module outsideCuts(length, finger, cutD, div) {
 }
 
 
-module faceA(size, finger, lidFinger, material) {
+module faceA(size, finger, lidFinger, material, dividers=0) {
   maxDivs = maxDiv(size, finger);
   uDiv = usableDiv(maxDivs);
   uDivLid = usableDiv(maxDiv(size, lidFinger));
@@ -115,10 +115,27 @@ module faceA(size, finger, lidFinger, material) {
     translate([-size[0]/2, uDiv[2]*finger/2, 0])
     rotate([0, 0, -90])
       insideCuts(length=size[2], finger=finger, cutD=material, div=uDiv[2]);
+
+   if (dividers) {
+    // length
+    l = size[0]/2;
+    // step size
+    step = size[0]/(dividers+1);
+    for (i = [-l:step:l]) {
+      //skip the end dividers; they are not needed (normal walls)
+      if (i>-l&&i<l) {
+        translate([i+material/2, -uDiv[2]*finger/2, 0])
+        rotate([0, 0, 90])
+          #insideCuts(length=size[2], finger=finger, cutD=material, div=uDiv[2]);
+      }
+    }
+   }
   }
 }
 
-module faceB(size, finger, lidFinger, material, lid=false) {
+//faceA(myS, myF, myF, m, dividers=3);
+
+module faceB(size, finger, lidFinger, material, dividers=0, lid=false) {
   //lid and base
   maxDivs = lid==true ? maxDiv(size, lidFinger) : maxDiv(size, finger);
   uDiv = usableDiv(maxDivs);
@@ -141,6 +158,20 @@ module faceB(size, finger, lidFinger, material, lid=false) {
     translate([-size[0]/2, uDiv[1]*myFinger/2, 0])
     rotate([0, 0, -90])
       insideCuts(length=size[1], finger=myFinger, cutD=material, div=uDiv[1]);
+     if (dividers) {
+    // length
+    l = size[0]/2;
+    // step size
+    step = size[0]/(dividers+1);
+    for (i = [-l:step:l]) {
+      //skip the end dividers; they are not needed (normal walls)
+      if (i>-l&&i<l) {
+        translate([i+material/2, -uDiv[1]*finger/2, 0])
+        rotate([0, 0, 90])
+          #insideCuts(length=size[1], finger=finger, cutD=material, div=uDiv[1]);
+      }
+    }
+   }
   }
 }
 
@@ -169,7 +200,7 @@ module faceC(size, finger, lidFinger, material) {
   }
 }
 
-//!divider(myS, myF, m, true);
+//divider(myS, myF, m, true);
 
 //internal divider 
 module divider(size, finger, material, lid=true) {
@@ -182,6 +213,7 @@ module divider(size, finger, material, lid=true) {
 
     //Y+/- edge
     if(!lid) {
+      // remove a bit from the top to avoid an interface w/ the lid
       translate([-size[1]/2, size[2]/2-material])
         outsideCuts(length=size[1], finger=finger, cutD=material, div=uDiv[1]);
     } else {
@@ -191,21 +223,23 @@ module divider(size, finger, material, lid=true) {
 
     translate([-size[1]/2, -size[2]/2])
       outsideCuts(length=size[1], finger=finger, cutD=material, div=uDiv[1]);
- 
+
     //Z+/- edge
     translate([-size[1]/2, size[2]/2])
     rotate([0, 0, -90])
-      outsideCuts(length=size[2], finger=finger, cutD=material, div=uDiv[1]);
+      outsideCuts(length=size[2], finger=finger, cutD=material, div=uDiv[2]);
     translate([size[1]/2-material, size[2]/2])
     rotate([0, 0, -90])
-      outsideCuts(length=size[2], finger=finger, cutD=material, div=uDiv[1]);
-
+      outsideCuts(length=size[2], finger=finger, cutD=material, div=uDiv[2]);
   }
+// this is code is for making the corresponding cuts in the other faces
+//  translate([size[1]/2-material, uDiv[2]*finger/2])
+//  rotate([0, 0, -90])
+//    #insideCuts(length=size[2], finger=finger, cutD=material, div=uDiv[2]);
 
 }
 
-
-module layout(size, material, 2D=true, alpha=0.5, v=true) {
+module layout(size, material, 2D=true, alpha=0.5, dividers=0, v=true) {
 
   if (v) {
     echo("parameters:");
@@ -218,7 +252,6 @@ module layout(size, material, 2D=true, alpha=0.5, v=true) {
     echo("face relative XYZs are shown along with childrendering colors");
     echo("layout2D() { faceA(-XZ red); faceA(+XZ darkred); faceB(-XY lime); faceB(+XY green); faceC(-YZ blue); faceC(+YZ darkblue);}");
   }
-
 
   if(2D) {
     //separation of pieces for 2D layout
@@ -270,11 +303,11 @@ module layout(size, material, 2D=true, alpha=0.5, v=true) {
         children(2);
 
     //lid
-//    color("lime", alpha=alpha)
-//      translate([0, 0, size[2]-material])
-//      linear_extrude(height=material, center=true)
-//        //faceB(size=size, finger=finger, material=material, lidFinger=lidFinger, lid=true);
-//        children(3);
+    color("lime", alpha=alpha)
+      translate([0, 0, size[2]-material])
+      linear_extrude(height=material, center=true)
+        //faceB(size=size, finger=finger, material=material, lidFinger=lidFinger, lid=true);
+        children(3);
 
     color("red", alpha=alpha)
       translate([0, size[1]/2-D, size[2]/2-D])
@@ -304,131 +337,49 @@ module layout(size, material, 2D=true, alpha=0.5, v=true) {
       linear_extrude(height=material, center=true)
         //faceC(size=size, finger=finger, material=material, lidFinger=lidFinger);
         children(5);
-
-    color("purple", alpha=alpha)
-      translate([0, 0, size[2]/2-D])
-      rotate([90, 0, 90])
-      linear_extrude(height=material, center=true)
-      children(6);
+    // add dividers
+     if (dividers) {
+      // length
+      l = size[0]/2;
+      // step size
+      step = size[0]/(dividers+1);
+      for (i = [-l:step:l]) {
+        //skip the end dividers; they are not needed (normal walls)
+        if (i>-l&&i<l) {
+          color("purple", alpha=alpha)
+          translate([i, 0, size[2]/2-D])
+          rotate([90, 0, 90])
+            linear_extrude(height=material, center=true)
+            children(6);
+        }
+      }
+     }
   }
 }
 
-
-
-//module layout2D(size=[50, 80, 60], finger=5, lidFinger=10, material=3) {
-//  //separation of pieces
-//  separation = 1.5;
-//  //calculate the most efficient layout
-//  yDisplace = size[1] > size[2] ? size[1] : size[2] + separation;
-//
-//  echo("faceA");
-//  translate([0, 0, 0])
-//    color("Red")
-//    faceA(size=size, finger=finger, material=material, lidFinger=lidFinger);
-//
-//  translate([size[0]+separation+size[1]+separation, 0, 0])
-//    color("darkred")
-//    faceA(size=size, finger=finger, material=material, lidFinger=lidFinger);
-//
-//
-//  translate([size[0]/2+size[1]/2+separation, 0, 0])
-//    color("blue")
-//    faceC(size=size, finger=finger, material=material, lidFinger=lidFinger);
-//
-//  translate([size[0]/2+size[1]/2+separation, -yDisplace, 0])
-//    color("darkblue")
-//    faceC(size=size, finger=finger, material=material, lidFinger=lidFinger);
-//
-//
-//
-//  translate([0, -size[2]/2-yDisplace/2-separation, 0])
-//    color("lime")
-//    faceB(size=size, finger=finger, material=material, lidFinger=lidFinger, lid=true);
-//
-//  translate([size[0]+separation+size[1]+separation, -size[2]/2-yDisplace/2-separation, 0])
-//    color("green")
-//    faceB(size=size, finger=finger, material=material, lidFinger=lidFinger);
-//
-//}
-//
-//module layout3D(size, finger, lidFinger, material, alpha=0.5) {
-//  //create a 3D model of the box
-//
-//  //amount to shift to account for thickness of material
-//  D = material/2;
-//
-//  //base
-//  color("green", alpha=alpha)
-//    translate([0, 0, 0])
-//    linear_extrude(height=material, center=true)
-//      faceB(size=size, finger=finger, material=material, lidFinger=lidFinger);
-//
-//  //lid
-//  color("lime", alpha=alpha)
-//    translate([0, 0, size[2]-material])
-//    linear_extrude(height=material, center=true)
-//      faceB(size=size, finger=finger, material=material, lidFinger=lidFinger, lid=true);
-//
-//  color("red", alpha=alpha)
-//    translate([0, size[1]/2-D, size[2]/2-D])
-//    rotate([90, 0, 0])
-//    linear_extrude(height=material, center=true)
-//      faceA(size=size, finger=finger, material=material, lidFinger=lidFinger);
-//
-//  color("darkred", alpha=alpha)
-//    translate([0, -size[1]/2+D, size[2]/2-D])
-//    rotate([90, 0, 0])
-//    linear_extrude(height=material, center=true)
-//      faceA(size=size, finger=finger, material=material, lidFinger=lidFinger);
-//
-//  color("blue", alpha=alpha)
-//    translate([size[0]/2-D, 0, size[2]/2-D])
-//    rotate([90, 0, 90])
-//    linear_extrude(height=material, center=true)
-//      faceC(size=size, finger=finger, material=material, lidFinger=lidFinger);
-//
-//
-//  color("darkblue", alpha=alpha)
-//    translate([-size[0]/2+D, 0, size[2]/2-D])
-//    rotate([90, 0, 90])
-//    linear_extrude(height=material, center=true)
-//      faceC(size=size, finger=finger, material=material, lidFinger=lidFinger);
-//
-//
-//
-//}
-//
-//
-//module fingerBox(size=[50, 40, 70], finger=5, lidFinger=10, material=3, l2D=false,
-//alpha=0.5) {
-//
-//  if(l2D) {
-//    layout2D(size=size, finger=finger, material=material, lidFinger=lidFinger);
-//  } else {
-//    layout3D(size=size, finger=finger, material=material, lidFinger=lidFinger,
-//             alpha=alpha);
-//  }
-//
-//}
-//
-
-//layout2D(size=[50, 80, 60], finger=5, lidFinger=10, material=3);
-//layout3D(size=[50, 80, 60], finger=5, lidFinger=10, material=3);
-
-//fingerBox(size=tSize, finger=tFinger, lidFinger=tLidFinger, material=tMaterial, l2D=t2D, alpha=tAlpha);
 
 myS = [customX, customY, customZ];
 myF = customFinger;
 myLF = customLidFinger;
 m = customMaterial;
 layout = customLayout2D;
+myDiv = 3;
 
-layout(myS, m, 2D=layout) {
-  faceA(myS, myF, myLF, m);
-  faceA(myS, myF, myLF, m);
-  faceB(myS, myF, myLF, m);
-  faceB(myS, myF, myLF, m, lid=true);
+layout(size=myS, material=m, 2D=layout, dividers=myDiv) {
+  faceA(myS, myF, myLF, m, myDiv);
+  faceA(myS, myF, myLF, m, dividers=myDiv);
+  faceB(myS, myF, myLF, m, dividers=myDiv);
+  faceB(myS, myF, myLF, m, lid=false);
   faceC(myS, myF, myLF, m);
   faceC(myS, myF, myLF, m);
-  divider(myS, myF, m, lid=true);
+  divider(myS, myF, m, lid=false);
 }
+
+/*
+To Do:
+* fix lid boolean lid==false should skip lid generation all together
+
+  
+
+*/
+
