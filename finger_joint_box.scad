@@ -8,32 +8,40 @@
 
 /* [Box Dimensions] */
 // Box X dimension
-customX = 680;
+customX = 340;
 // Box Y dimension
 customY = 125;
 // Box Z dimension
-customZ = 140.; //[100.01]
+customZ = 138; //[100.01]
 
 // Finger & Cut width (sides, bottom) - must be < 1/3 shortest side
 customFinger = 10;
 // Finger & Cut wdith on lid only - must be < 1/3 shortest X or Y
 customLidFinger = 20;
 
+// number of internal dividers
+customDividers = 2;
+
+// add a lid to the box (set customLidFinger=0 to remove joints along top edge)
+customLid = true;
+
 //Material thickness
 customMaterial=3; //[0.1:0.05:10]
 
 /* [Layout Option] */
 // layout 2D or 3D style - THINGIVERSE CANNOT OUTPUT 2D STLS!
-customLayout2D = 0; // [0:3D layout for visualization, 1:2D layout for DXF output]
+customLayout2D = 1; // [0:3D layout for visualization, 1:2D layout for DXF output]
 
 /* [Hidden] */
 // assign the variable for the demo module
+/*
 tSize=[customX, customY, customZ];
 tFinger=customFinger;
 tLidFinger=customLidFinger;
 tMaterial=customMaterial;
 t2D=0;
 tAlpha=0.5;
+*/
 
 
 function usableDiv(divs) =
@@ -133,7 +141,7 @@ module faceA(size, finger, lidFinger, material, dividers=0) {
   }
 }
 
-//faceA(myS, myF, myF, m, dividers=3);
+
 
 module faceB(size, finger, lidFinger, material, dividers=0, lid=false) {
   //lid and base
@@ -174,6 +182,7 @@ module faceB(size, finger, lidFinger, material, dividers=0, lid=false) {
    }
   }
 }
+
 
 
 module faceC(size, finger, lidFinger, material) {
@@ -242,8 +251,7 @@ module divider(size, finger, material, lid=true) {
 module layout(size, material, 2D=true, alpha=0.5, dividers=0, v=true) {
 
   if (v) {
-    echo("parameters:");
-    echo("material (thickness of material)");
+    echo("parameters:"); echo("material (thickness of material)");
     echo("size ([X, Y, Z] - dimensions of box)");
     echo("2D (boolean - childrender in 2D or 3D)");
     echo("alpha (real between 0, 1 - transparency of 3D model)");
@@ -264,7 +272,7 @@ module layout(size, material, 2D=true, alpha=0.5, dividers=0, v=true) {
       color("Red")
       //faceA(size=size, finger=finger, material=material, lidFinger=lidFinger);
       children(0);
- 
+
     translate([size[0]+separation+size[1]+separation, 0, 0])
       color("darkred")
       //faceA(size=size, finger=finger, material=material, lidFinger=lidFinger);
@@ -290,6 +298,13 @@ module layout(size, material, 2D=true, alpha=0.5, dividers=0, v=true) {
       color("green")
       //faceB(size=size, finger=finger, material=material, lidFinger=lidFinger);
       children(3);
+
+    for (i=[0:dividers-1]) {
+      translate([(i*size[1])+separation*i, size[2]+separation, 0])
+        color("purple")
+        children(6);
+    }
+
   } else {
     //draw 3d model
     //amount to shift to account for thickness of material
@@ -361,25 +376,24 @@ module layout(size, material, 2D=true, alpha=0.5, dividers=0, v=true) {
 myS = [customX, customY, customZ];
 myF = customFinger;
 myLF = customLidFinger;
-m = customMaterial;
-layout = customLayout2D;
-myDiv = 3;
+myMat = customMaterial;
+myDiv = customDividers;
+myLid = customLid;
+myLayout = customLayout2D; 
 
-layout(size=myS, material=m, 2D=layout, dividers=myDiv) {
-  faceA(myS, myF, myLF, m, myDiv);
-  faceA(myS, myF, myLF, m, dividers=myDiv);
-  faceB(myS, myF, myLF, m, dividers=myDiv);
-  faceB(myS, myF, myLF, m, lid=false);
-  faceC(myS, myF, myLF, m);
-  faceC(myS, myF, myLF, m);
-  divider(myS, myF, m, lid=false);
+layout(size=myS, material=myMat, 2D=myLayout, dividers=myDiv) {
+  faceA(myS, myF, myLF, myMat, myDiv);
+  faceA(myS, myF, myLF, myMat, dividers=myDiv);
+  faceB(myS, myF, myLF, myMat, dividers=myDiv, lid=false);
+  faceB(myS, myF, myLF, myMat, dividers=myDiv, lid=myLid);
+  faceC(myS, myF, myLF, myMat);
+  faceC(myS, myF, myLF, myMat);
+  divider(myS, myF, myMat, lid=myLid);
 }
 
 /*
 To Do:
-* fix lid boolean lid==false should skip lid generation all together
-
-  
+* lid is using the lidfinger division values for making the finger holes in lid
 
 */
 
