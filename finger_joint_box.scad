@@ -148,6 +148,10 @@ module faceB(size, finger, lidFinger, material, dividers=0, lid=false) {
   maxDivs = lid==true ? maxDiv(size, lidFinger) : maxDiv(size, finger);
   uDiv = usableDiv(maxDivs);
 
+  // divisions for the divider - this is different when a lidFinger value is specified
+  maxDividerDivs = maxDiv(size, finger);
+  uDividerDiv  = usableDiv(maxDividerDivs);
+
   myFinger = lid==true ? lidFinger : finger;
 
   difference() {
@@ -172,11 +176,11 @@ module faceB(size, finger, lidFinger, material, dividers=0, lid=false) {
     // step size
     step = size[0]/(dividers+1);
     for (i = [-l:step:l]) {
-      //skip the end dividers; they are not needed (normal walls)
+      //skip the end dividers; they are not needed (normal +/- X outer walls)
       if (i>-l&&i<l) {
-        translate([i+material/2, -uDiv[1]*finger/2, 0])
+        translate([i+material/2, -uDividerDiv[1]*finger/2, 0])
         rotate([0, 0, 90])
-          #insideCuts(length=size[1], finger=finger, cutD=material, div=uDiv[1]);
+          #insideCuts(length=size[1], finger=finger, cutD=material, div=uDividerDiv[1]);
       }
     }
    }
@@ -380,6 +384,7 @@ myMat = customMaterial;
 myDiv = customDividers;
 myLid = customLid;
 myLayout = customLayout2D; 
+//myLayout = false;
 
 layout(size=myS, material=myMat, 2D=myLayout, dividers=myDiv) {
   faceA(myS, myF, myLF, myMat, myDiv);
