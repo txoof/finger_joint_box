@@ -90,13 +90,15 @@ module outsideCuts(length, finger, cutD, div) {
   square([endCut, myCutD]);
 
   //draw rectangeles to make the negative slots
-  for (i=[0:numCuts]) {
-    if (i < numCuts) {
-     translate([i*(finger*2)+padding, 0, 0])
-        square([finger, myCutD]);
-    } else {
-      translate([i*finger*2+padding, 0, 0])
-        square([endCut, myCutD]);
+  if(finger>0) {
+    for (i=[0:numCuts]) {
+      if (i < numCuts) {
+       translate([i*(finger*2)+padding, 0, 0])
+          square([finger, myCutD]);
+      } else {
+        translate([i*finger*2+padding, 0, 0])
+          square([endCut, myCutD]);
+      }
     }
   }
 }
@@ -115,8 +117,10 @@ module faceA(size, finger, lidFinger, material, dividers=0) {
   difference() {
     square([size[0], size[2]], center=true);
     // X+/- edge (X axis in OpenScad)
+    if(lidFinger > 0) {
     translate([-uDivLid[0]*lidFinger/2, size[2]/2-material, 0])
       insideCuts(length=size[0], finger=lidFinger, cutD=material, div=uDivLid[0]);
+    }
    // translate([-uDiv[0]*finger/2, -size[2], 0]
     translate([-uDiv[0]*finger/2, -size[2]/2, 0])
       insideCuts(length=size[0], finger=finger, cutD=material, div=uDiv[0]);
