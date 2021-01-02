@@ -20,9 +20,9 @@ customFinger = 10;
 customLidFinger = 20;
 
 // number of internal dividers
-customDividers = 2;
+customDividers = 1; //[0:1:20]
 
-// add a lid to the box (set customLidFinger=0 to remove joints along top edge)
+// add a lid with different finger width to the box (set customLidFinger=0 to remove joints along top edge)
 customLid = true;
 
 //Material thickness
@@ -51,10 +51,11 @@ function usableDiv(divs) =
 
 
 //calculate max number of fingers and cuts possible
+// this kicks errors due to having div by 0 error when lidFinger==0
 function maxDiv(size, finger) =
-  [floor(size[0]/finger),
-   floor(size[1]/finger),
-   floor(size[2]/finger)];
+ [floor(size[0]/finger),
+  floor(size[1]/finger),
+  floor(size[2]/finger)];
 
 module insideCuts(length, finger, cutD, div) {
   //make cuts entirely inside the length of the edge
@@ -102,9 +103,14 @@ module outsideCuts(length, finger, cutD, div) {
 
 
 module faceA(size, finger, lidFinger, material, dividers=0) {
+  echo("Rendering faceA (X, Z faces)" );
+  echo("using size:[0]: ", size[0]," size[2]: ", size[2]);
   maxDivs = maxDiv(size, finger);
   uDiv = usableDiv(maxDivs);
+
   uDivLid = usableDiv(maxDiv(size, lidFinger));
+  /* uDivLid = lidFinger > 0 ? usableDiv(maxDiv(size, lidFinger)) : 0; */
+
 
   difference() {
     square([size[0], size[2]], center=true);
@@ -134,7 +140,7 @@ module faceA(size, finger, lidFinger, material, dividers=0) {
       if (i>-l&&i<l) {
         translate([i+material/2, -uDiv[2]*finger/2, 0])
         rotate([0, 0, 90])
-          #insideCuts(length=size[2], finger=finger, cutD=material, div=uDiv[2]);
+          insideCuts(length=size[2], finger=finger, cutD=material, div=uDiv[2]);
       }
     }
    }
@@ -144,6 +150,8 @@ module faceA(size, finger, lidFinger, material, dividers=0) {
 
 
 module faceB(size, finger, lidFinger, material, dividers=0, lid=false) {
+  echo("Rendering faceB (X, Y Faces)");
+  echo("using size:[0]: ", size[0]," size[1]: ", size[1]);
   //lid and base
   maxDivs = lid==true ? maxDiv(size, lidFinger) : maxDiv(size, finger);
   uDiv = usableDiv(maxDivs);
@@ -180,7 +188,7 @@ module faceB(size, finger, lidFinger, material, dividers=0, lid=false) {
       if (i>-l&&i<l) {
         translate([i+material/2, -uDividerDiv[1]*finger/2, 0])
         rotate([0, 0, 90])
-          #insideCuts(length=size[1], finger=finger, cutD=material, div=uDividerDiv[1]);
+          insideCuts(length=size[1], finger=finger, cutD=material, div=uDividerDiv[1]);
       }
     }
    }
@@ -190,6 +198,8 @@ module faceB(size, finger, lidFinger, material, dividers=0, lid=false) {
 
 
 module faceC(size, finger, lidFinger, material) {
+  echo("Rendering faceB (Y, Z Faces)");
+  echo("using size:[1]: ", size[1]," size[2]: ", size[2]);
   maxDivs = maxDiv(size, finger);
   uDiv = usableDiv(maxDivs);
   uDivLid = usableDiv(maxDiv(size, lidFinger));
@@ -215,7 +225,7 @@ module faceC(size, finger, lidFinger, material) {
 
 //divider(myS, myF, m, true);
 
-//internal divider 
+//internal divider
 module divider(size, finger, material, lid=true) {
 
   maxDivs = maxDiv(size, finger);
@@ -261,7 +271,7 @@ module layout(size, material, 2D=true, alpha=0.5, dividers=0, v=true) {
     echo("alpha (real between 0, 1 - transparency of 3D model)");
     echo(" ");
     echo("requires six children faces provided in the order below");
-    echo("face relative XYZs are shown along with childrendering colors");
+    echo("face relative XYZs are shown along with child rendering colors");
     echo("layout2D() { faceA(-XZ red); faceA(+XZ darkred); faceB(-XY lime); faceB(+XY green); faceC(-YZ blue); faceC(+YZ darkblue);}");
   }
 
@@ -298,15 +308,19 @@ module layout(size, material, 2D=true, alpha=0.5, dividers=0, v=true) {
       //faceB(size=size, finger=finger, material=material, lidFinger=lidFinger, lid=true);
       children(2);
 
+    if (customLidFinger > 0) {
     translate([size[0]+separation+size[1]+separation, -size[2]/2-yDisplace/2-separation, 0])
       color("green")
       //faceB(size=size, finger=finger, material=material, lidFinger=lidFinger);
       children(3);
+    }
 
-    for (i=[0:dividers-1]) {
-      translate([(i*size[1])+separation*i, size[2]+separation, 0])
-        color("purple")
-        children(6);
+    if (dividers > 0) {
+      for (i=[0:dividers-1]) {
+        translate([(i*size[1]-customX/2+customY/2)+separation*i, size[2]+separation, 0])
+          color("purple")
+          children(6);
+      }
     }
 
   } else {
@@ -322,11 +336,13 @@ module layout(size, material, 2D=true, alpha=0.5, dividers=0, v=true) {
         children(2);
 
     //lid
+    if (customLidFinger > 0 ) {
     color("lime", alpha=alpha)
       translate([0, 0, size[2]-material])
       linear_extrude(height=material, center=true)
         //faceB(size=size, finger=finger, material=material, lidFinger=lidFinger, lid=true);
         children(3);
+    }
 
     color("red", alpha=alpha)
       translate([0, size[1]/2-D, size[2]/2-D])
@@ -383,7 +399,7 @@ myLF = customLidFinger;
 myMat = customMaterial;
 myDiv = customDividers;
 myLid = customLid;
-myLayout = customLayout2D; 
+myLayout = customLayout2D;
 //myLayout = false;
 
 layout(size=myS, material=myMat, 2D=myLayout, dividers=myDiv) {
@@ -401,4 +417,3 @@ To Do:
 * lid is using the lidfinger division values for making the finger holes in lid
 
 */
-
