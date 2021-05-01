@@ -2,8 +2,6 @@
   Box with fingerjoints - Based on earlier version of Finger Joint Box
   http://www.thingiverse.com/thing:448592
   Aaron Ciuffo
-  rewrite to be easier to use as a library
-  24 June 2019
 */
 
 /* [Box Dimensions] */
